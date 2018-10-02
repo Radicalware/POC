@@ -1,0 +1,27 @@
+
+
+Why is this code important?
+Because it is one of the few codes that will give shellcode output 
+that bypasses up-to-date Windows AV. (10/2/2018) As far as I know, 
+Veil does not output shellcode so it doesn't compete in the same scope.
+
+
+Why is this released under POC and not Malware_Tools?
+Because this code has too many issues to be a real code. Even though it does
+its job, I don't want to continue this project. If you open the salvage.rb
+you will see it's many flaws in it's known security vulnerabilities.
+ I would rather just restart the project, fixing the issues as I go along 
+ and of course, write it in C++, windows style like 'Cane & Able'.
+
+
+Why release it at all?
+I wasn't going to initially, but I said I would to too many people so here
+it is in alls its glory :)
+
+
+Comments in code?
+Yeah, I left those in to help an confuse you.
+Some of them may be inaccurate, don't rely on them too much.
+
+Enjoy :)
+
