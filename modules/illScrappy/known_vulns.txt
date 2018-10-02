@@ -3,6 +3,8 @@ of this encoder, the next one will take address these from the ground up
 using C++, full GUI and Windows friendly for the non-hacker to test
 their security! 
 
+The following was copied and pasted from salvage.rb
+
 0. Way dis-proportionate registery use. LEA is used way to much compared to MOV.
 1. Key is in plain sight
 2. No conditional jmps used for splash
