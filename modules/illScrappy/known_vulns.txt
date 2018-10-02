@@ -1,0 +1,24 @@
+These are some of the reasons on why I decided to quit the production
+of this encoder, the next one will take address these from the ground up
+using C++, full GUI and Windows friendly for the non-hacker to test
+their security! 
+
+0. Way dis-proportionate registery use. LEA is used way to much compared to MOV.
+1. Key is in plain sight
+2. No conditional jmps used for splash
+3. No stack managment
+4. No junk ops with pointers
+5. xor is always used 
+6. cmp is always used
+7. The loop count is always tested against 0x01
+8. There is no add/xor offsets
+9. I need to add a 3 stage encryption method. XorAdditiveFeedback is a two 
+   stage enc method using Add decoded code to key, then xor key and code.
+10. No Reg tracking, adding this would allow me to use bitwise operators to 
+    modify current registers. For example I could add an exact value to another
+    register to get that register to equal 0x00.
+11. There is no option now but later will be an option to remove dead bytes
+    completely, including encrypted code. (To make this viable, the jo will need
+    to be far more advanced, which it will be.)
+12. No junk loops to be brute-forced (This greatly increases the time for
+    auto-dbg to analyze code by adding in many more steps with little code inc)
