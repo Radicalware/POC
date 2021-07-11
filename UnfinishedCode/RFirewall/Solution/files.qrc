@@ -1,0 +1,46 @@
+<RCC>
+<qresource prefix="/">
+    <!-- ==================== QML ===================================== -->
+
+    <!-- Main -->
+    <file>view/MainWindow.qml</file>
+    <file>view/ManageRuleDialog.qml</file>
+    <file>view/Constants/Constants.qml</file>
+
+    <!-- QML/C++ Objects -->
+    <file>view/Backend/RulesModel.qml</file>
+    
+    <!-- UI -->
+    <file>view/Support/RulesView.qml</file>
+    <file>view/Support/RulesDelegate.qml</file>
+    <file>view/Support/NewRuleForm.qml</file>
+    <file>view/Support/SectionDelegate.qml</file>
+
+    <!-- Mods -->
+    <file>view/Mods/MLabel.qml</file>
+
+    
+    <!-- ==================== QML ===================================== -->
+    <!-- ================== RESOURCE ================================== -->
+    <!-- Icons -->
+    <file>resource/icons/RedX_on.png</file>
+    <file>resource/icons/RedX_off.png</file>
+
+    <!-- Pictures -->
+    <file>resource/pictures/BlueWallpaper.png</file>
+
+    <!-- Backdrops -->
+    <file>resource/backdrops/StartBox/LightTextBox.png</file>
+    <file>resource/backdrops/StartBox/DarkTextBox.png</file>
+    <file>resource/backdrops/StartBox/RedTextBox.png</file>
+    
+    <file>resource/backdrops/SectionBar/Section_On.png</file>
+    <file>resource/backdrops/SectionBar/Section_Off.png</file>
+
+
+    <!-- ================== RESOURCE ================================== -->
+
+</qresource>
+</RCC>
+
+

@@ -1,0 +1,5 @@
+module Support
+NewRuleForm 1.0 NewRuleForm.qml
+RulesDelegate 1.0 RulesDelegate.qml
+RulesView 1.0 RulesView.qml
+SectionDelegate 1.0 SectionDelegate.qml
