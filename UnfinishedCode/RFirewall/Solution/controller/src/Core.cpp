@@ -2,6 +2,7 @@
 #pragma warning( disable : 26812 ) // for allowing the STL (non-class enum)
 #pragma warning( disable : 26444 )
 
+#include "LocalMacros.h"
 #include "Core.h"
 
 #include <QQuickWindow>
@@ -15,7 +16,6 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 
-#include "Macros.h"
 #include "Enum/Rules.h"
 #include "Models/RulesModel.h"
 
@@ -63,7 +63,7 @@ bool Core::Initialize()
     // ------------ C++ Objects 
     mEngine.rootContext()->setContextProperty("Core", this);
 
-    AddQmlClass(Enum::Rules, RulesPtr, "EnumRules");
+    AddQmlClass(Enum::Rules, Rules, "EnumRules");
     // ------------------------------------------------------------------------------------------------------------
 
     mEngine.load(QUrl(QStringLiteral("qrc:/view/MainWindow.qml"))); // often main.qml

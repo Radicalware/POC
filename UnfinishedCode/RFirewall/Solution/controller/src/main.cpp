@@ -1,5 +1,4 @@
-﻿
-#include <QGuiApplication>
+﻿#include <QGuiApplication>
 
 #include "Nexus.h"
 #include "Core.h"

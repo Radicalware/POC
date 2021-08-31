@@ -14,7 +14,7 @@ include("${RADICAL_PATH}/Radical-App-Config.cmake")
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+add_compile_definitions("__QT_PROJECT__")
 # -------------------------- BUILD ------------------------------------------------------
 
 project (${THIS})
@@ -56,6 +56,8 @@ set(QML_IMPORT_PATH  "${QML_DIRS}" CACHE STRING "Qt Creator extra qml import pat
 
 set(SOLUTION "${CMAKE_SOURCE_DIR}/Solution")
 qt6_add_resources(QT_RESOURCES "${SOLUTION}/files.qrc")
+
+SetLocalInstallDirs()
 find_program_files(SOLUTION_FILES "${SOLUTION}")
 
 # Build the app!
@@ -71,6 +73,7 @@ find_package(Nexus)
 find_package(xvector)
 find_package(xstring)
 find_package(xmap)
+find_package(Macros)
 find_package(OS)
 find_package(SYS)
 find_package(Timer)
@@ -98,6 +101,7 @@ target_link_libraries(${THIS}
     Radical::xvector
     Radical::xstring
     Radical::xmap
+    Radical::Macros
 )
 
 # -------------------------- POST-CONFIG ------------------------------------------------

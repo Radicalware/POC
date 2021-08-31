@@ -1,5 +1,5 @@
-﻿#include "Enum/Rules.h"
-#include "Macros.h"
+﻿#include "LocalMacros.h"
+#include "Enum/Rules.h"
 
 #include "QString.h"
 
