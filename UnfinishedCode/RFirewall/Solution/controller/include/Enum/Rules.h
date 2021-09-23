@@ -1,5 +1,8 @@
 ﻿#pragma once
 
+#include "QObject.h"
+
+#include "Macros.h"
 #include "Enum/Rule.h"
 
 #include <windows.h>
@@ -8,7 +11,6 @@
 #include <atlcomcli.h>
 #include <netfw.h>
 
-#include "QObject.h"
 
 #pragma comment( lib, "ole32.lib" )
 #pragma comment( lib, "oleaut32.lib" )
