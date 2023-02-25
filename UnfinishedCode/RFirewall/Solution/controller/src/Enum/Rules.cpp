@@ -124,7 +124,7 @@ bool Enum::Rules::ScanRules()
     if (pEnumerator)
         hr = pEnumerator->QueryInterface(__uuidof(IEnumVARIANT), (void**)&pVariant);
 
-    uint Looper = LimitSize;
+    xint Looper = LimitSize;
 
     while (SUCCEEDED(hr) && hr != S_FALSE)
     {
@@ -206,18 +206,18 @@ Enum::Rule Enum::Rules::ParseOutRule(INetFwRule* FwRule)
     ProfileMap[2].Name = L"Public";
 
     if (SUCCEEDED(FwRule->get_Name(&bstrVal)))
-        Rule.RuleName = WTXS(bstrVal);
+        Rule.RuleName = bstrVal;
 
     if (SUCCEEDED(FwRule->get_Description(&bstrVal)))
-        Rule.Description = WTXS(bstrVal);
+        Rule.Description = bstrVal;
 
     if (SUCCEEDED(FwRule->get_ApplicationName(&bstrVal))) {
-        Rule.FullPath = WTXS(bstrVal);
+        Rule.FullPath = bstrVal;
         Rule.ExeName = Rule.FullPath.Sub(Enum::Rule::ExePathPattern, xstring::static_class);
     }
 
     if (SUCCEEDED(FwRule->get_ServiceName(&bstrVal)))
-        Rule.ServiceName = WTXS(bstrVal);
+        Rule.ServiceName = bstrVal;
 
     if (SUCCEEDED(FwRule->get_Protocol(&lVal)))
     {
@@ -236,20 +236,20 @@ Enum::Rule Enum::Rules::ParseOutRule(INetFwRule* FwRule)
         if (lVal != NET_FW_IP_VERSION_V4 && lVal != NET_FW_IP_VERSION_V6)
         {
             if (SUCCEEDED(FwRule->get_LocalPorts(&bstrVal)))
-                Rule.Local.Port = WTXS(bstrVal);
+                Rule.Local.Port = bstrVal;
 
             if (SUCCEEDED(FwRule->get_RemotePorts(&bstrVal)))
-                Rule.Remote.Port = WTXS(bstrVal);
+                Rule.Remote.Port = bstrVal;
         }
         else if (SUCCEEDED(FwRule->get_IcmpTypesAndCodes(&bstrVal)))
-                Rule.ICMP_TypeCode = WTXS(bstrVal);
+                Rule.ICMP_TypeCode = bstrVal;
     }
 
     if (SUCCEEDED(FwRule->get_LocalAddresses(&bstrVal)))
-        Rule.Local.Address = WTXS(bstrVal);
+        Rule.Local.Address = bstrVal;
 
     if (SUCCEEDED(FwRule->get_RemoteAddresses(&bstrVal)))
-        Rule.Remote.Address = WTXS(bstrVal);
+        Rule.Remote.Address = bstrVal;
 
     if (SUCCEEDED(FwRule->get_Profiles(&lProfileBitmask)))
     {
@@ -259,7 +259,7 @@ Enum::Rule Enum::Rules::ParseOutRule(INetFwRule* FwRule)
         for (int i = 0; i < 3; i++)
         {
             if (lProfileBitmask & ProfileMap[i].Id)
-                Rule.Profiles.Add(WTXS(ProfileMap[i].Name));
+                Rule.Profiles.Add(ProfileMap[i].Name);
             // todo: check the profile map and set bools for their types
         }
     }
@@ -306,13 +306,13 @@ Enum::Rule Enum::Rules::ParseOutRule(INetFwRule* FwRule)
             for (long index = pSa->rgsabound->lLbound; index < (long)pSa->rgsabound->cElements; index++)
             {
                 SafeArrayGetElement(pSa, &index, &InterfaceString);
-                Rule.Interfaces.Add(WTXS((BSTR)InterfaceString.bstrVal));
+                Rule.Interfaces.Add(InterfaceString.bstrVal);
             }
         }
     }
 
     if (SUCCEEDED(FwRule->get_InterfaceTypes(&bstrVal)))
-        Rule.InterfaceTypes = WTXS(bstrVal);
+        Rule.InterfaceTypes = bstrVal;
 
     if (SUCCEEDED(FwRule->get_Enabled(&bEnabled)))
     {
@@ -323,7 +323,7 @@ Enum::Rule Enum::Rules::ParseOutRule(INetFwRule* FwRule)
     }
 
     if (SUCCEEDED(FwRule->get_Grouping(&bstrVal)))
-        Rule.Grouping = WTXS(bstrVal);
+        Rule.Grouping = bstrVal;
 
     if (SUCCEEDED(FwRule->get_EdgeTraversal(&bEnabled)))
     {

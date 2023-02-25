@@ -38,7 +38,7 @@ public:
     // -------------------------------------------------------------------------
     // QProperties Start 
 public:
-    void SetStopClock(uint unused = 0);
+    void SetStopClock(xint unused = 0);
 
     // QProperties End
     // -------------------------------------------------------------------------
@@ -51,7 +51,7 @@ public:
     // -------------------------------------------------------------------------
 private:
     QQmlApplicationEngine mEngine;
-    Enum::Rules* RulesPtr = nullptr;
-    Timer mTimer;
+    Enum::Rules* mRulesPtr = nullptr;
+    RA::Timer    mTimer;
 };
 

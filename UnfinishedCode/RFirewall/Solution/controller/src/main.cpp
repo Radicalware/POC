@@ -1,5 +1,7 @@
 ﻿#include <QGuiApplication>
 
+#define _uint_
+
 #include "Nexus.h"
 #include "Core.h"
 
@@ -7,17 +9,19 @@
 
 int main(int argc, char *argv[])
 {
+    int LnReValue = 0;
+    Begin();
     Nexus<>::Start();
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    QGuiApplication app(argc, argv);
-    Core core;
-    int retValue = 0;
+    QGuiApplication LoApp(argc, argv);
+    Core LoCore;
 
-    if (core.Initialize())
-        retValue = app.exec();
+    if (LoCore.Initialize())
+        LnReValue = LoApp.exec();
     else
-        retValue = -1;
+        LnReValue = -1;
 
-    Nexus<>::Stop();
-    return retValue;
+    RescuePrint();
+    LnReValue = Nexus<>::Stop();
+    return LnReValue;
 }

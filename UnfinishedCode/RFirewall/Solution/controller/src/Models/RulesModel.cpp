@@ -9,8 +9,8 @@ RulesModel::RulesModel(QObject* parent ) : QAbstractListModel(parent)
 {
     Begin();
     Enum::Rule NewRule;
-    NewRule.ExeName = "Test CppExeName.exe";
-    NewRule.FullPath = "Test C:/CppFull/Path/CppExeName.exe";
+    NewRule.ExeName     = "Test CppExeName.exe";
+    NewRule.FullPath    = "Test C:/CppFull/Path/CppExeName.exe";
     NewRule.Description = "Test Cpp Description";
     NewRule.ServiceName = "Test Cpp ServiceName";
 
@@ -30,11 +30,11 @@ QVariant RulesModel::GetData(const QModelIndex& index, int role) const
     // std::cout << "GetData() << " << mRules.At(index.row()).ExeName.toStdString() << std::endl;
     if (index.row() < rowCount())
         switch (role) {
-            case ERoleExeName:      return mRules.At(index.row()).ExeName.c_str();
-            case ERoleFullPath:     return mRules.At(index.row()).FullPath.c_str();
-            case ERoleRuleName:     return mRules.At(index.row()).RuleName.c_str();
-            case ERoleDescription:  return mRules.At(index.row()).Description.c_str();
-            case ERoleServiceName:  return mRules.At(index.row()).ServiceName.c_str();
+            case ERoleExeName:        return mRules.At(index.row()).ExeName.c_str();
+            case ERoleFullPath:       return mRules.At(index.row()).FullPath.c_str();
+            case ERoleRuleName:       return mRules.At(index.row()).RuleName.c_str();
+            case ERoleDescription:    return mRules.At(index.row()).Description.c_str();
+            case ERoleServiceName:    return mRules.At(index.row()).ServiceName.c_str();
             case ERoleLocalAddress:   return mRules.At(index.row()).Local.Address.c_str();
             case ERoleLocalPort:      return mRules.At(index.row()).Local.Port.c_str();
             case ERoleRemoteAddress:  return mRules.At(index.row()).Remote.Address.c_str();
@@ -49,11 +49,11 @@ QHash<int, QByteArray> RulesModel::roleNames() const
 {
     Begin();
     static const QHash<int, QByteArray> roles{
-        { ERoleExeName,     "exeName" },
-        { ERoleFullPath,    "fullPath" },
-        { ERoleRuleName,    "ruleName" },
-        { ERoleDescription, "description" },
-        { ERoleServiceName, "serviceName" },
+        { ERoleExeName,         "exeName" },
+        { ERoleFullPath,        "fullPath" },
+        { ERoleRuleName,        "ruleName" },
+        { ERoleDescription,     "description" },
+        { ERoleServiceName,     "serviceName" },
 
         { ERoleLocalAddress,    "localAddress" },
         { ERoleLocalPort,       "localPort" },

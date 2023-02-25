@@ -8,8 +8,9 @@
 #include <windows.h>
 #include <stdio.h>
 #include <comutil.h>
-#include <atlcomcli.h>
+#include <QVariant>
 #include <netfw.h>
+#include <atlcomcli.h>
 
 
 #pragma comment( lib, "ole32.lib" )
@@ -20,7 +21,7 @@ namespace Enum // Enumeration Lib set
     class Rules : public QObject
     {
         Q_OBJECT;
-        const uint LimitSize = 100;
+        const xint LimitSize = 100;
     public:
         Rules();
         ~Rules();
@@ -50,14 +51,14 @@ private:
         HRESULT hrComInit = S_OK;
         HRESULT hr = S_OK;
 
-        ULONG cFetched = 0;
+        ULONG       cFetched = 0;
         CComVariant var;
 
-        IUnknown* pEnumerator = nullptr;
-        IEnumVARIANT* pVariant = nullptr;
+        IUnknown*       pEnumerator = nullptr;
+        IEnumVARIANT*   pVariant = nullptr;
 
-        INetFwPolicy2* pNetFwPolicy2 = nullptr;
-        INetFwRules* pFwRules = nullptr;
-        INetFwRule* pFwRule = nullptr;
+        INetFwPolicy2*  pNetFwPolicy2 = nullptr;
+        INetFwRules*    pFwRules = nullptr;
+        INetFwRule*     pFwRule = nullptr;
     };
 };

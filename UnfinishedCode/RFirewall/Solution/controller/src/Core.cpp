@@ -37,33 +37,43 @@ Core::Core(QObject* parent) : QObject(parent)
 
 Core::~Core()
 {
-    DeleteObject(RulesPtr);
+    DeleteObject(mRulesPtr);
 }
 
 bool Core::Initialize()
 {
+    Begin();
     mEngine.addImportPath("/view/");
     mEngine.addImportPath("/view/Support/");
     mEngine.addImportPath("/view/Constants/");
 
     // ------------ qmldir Modules--------------------------------------------------------------------------------
     // Adding Requires Modding: (1) Core.cpp (2) qmldir (3) files.qrc
-    // Custom QML C++ Types
-    qmlRegisterType<RulesModel>("Backend", 1, 0, "RulesModel");
-    // Standard QML Objects
-    qmlRegisterType(QUrl("qrc:///view/Support/NewRuleForm.qml"),          "Support", 1, 0, "NewRuleForm");
-    qmlRegisterType(QUrl("qrc:///view/Support/RulesDelegate.qml"),        "Support", 1, 0, "RulesDelegate");
-    qmlRegisterType(QUrl("qrc:///view/Support/RulesView.qml"),            "Support", 1, 0, "RulesView");
-    qmlRegisterType(QUrl("qrc:///view/Support/SectionDelegate.qml"),      "Support", 1, 0, "SectionDelegate");
 
-    qmlRegisterType(QUrl("qrc:///view/Mods/MLabel.qml"), "Mods", 1, 0, "MLabel");
+    // Backend Models
+    qmlRegisterType(QUrl("qrc:///view/Backend/RulesModel.qml"),             "Backend",  1, 0,   "RulesModel");
+    // Support
+    qmlRegisterType(QUrl("qrc:///view/Support/NewRuleForm.qml"),            "Support",  1, 0,   "NewRuleForm");
+    qmlRegisterType(QUrl("qrc:///view/Support/RulesDelegate.qml"),          "Support",  1, 0,   "RulesDelegate");
+    qmlRegisterType(QUrl("qrc:///view/Support/RulesView.qml"),              "Support",  1, 0,   "RulesView");
+    qmlRegisterType(QUrl("qrc:///view/Support/SectionDelegate.qml"),        "Support",  1, 0,   "SectionDelegate");
+    // Mods
+    qmlRegisterType(QUrl("qrc:///view/Mods/MLabel.qml"),                    "Mods",     1, 0,   "MLabel");
     // Singletons
-    qmlRegisterSingletonType(QUrl("qrc:///view/Constants/Constants.qml"), "Constants", 1, 0, "Constants");
+    qmlRegisterSingletonType(QUrl("qrc:///view/Constants/Constants.qml"),   "Constants", 1, 0,  "Constants");
     // ------------------------------------------------------------------------------------------------------------
     // ------------ C++ Objects 
     mEngine.rootContext()->setContextProperty("Core", this);
 
-    AddQmlClass(Enum::Rules, Rules, "EnumRules");
+    //AddQmlClass(Enum::Rules, mRules, "EnumRules");
+
+    RenewPtr(mRules, new Enum::Rules());
+    mEngine.rootContext()->setContextProperty("EnumRules", mRulesPtr);
+    qRegisterMetaType<Enum::Rules*>("EnumRules");
+
+    //mEngine.rootContext()->setContextProperty("EnumRules", mRulesPtr);
+    //qRegisterMetaType<Enum::Rules*>("mRulesModel");
+
     // ------------------------------------------------------------------------------------------------------------
 
     mEngine.load(QUrl(QStringLiteral("qrc:/view/MainWindow.qml"))); // often main.qml
@@ -79,18 +89,19 @@ bool Core::Initialize()
         return false;
     else
         return true;
+    Rescue();
 }
 
 
 // Q_INVOKABLE 
 // void Core::ScanFirewallRules()
 // {
-//     CreateClassObject(Enum::Rules, RulesPtr);
+//     CreateClassObject(Enum::Rules, mRulesPtr);
 //     // REF(Rules, void());
 // }
 
 
-void Core::SetStopClock(uint unused)
+void Core::SetStopClock(xint unused)
 {
     mTimer.Lap(); // recoreds the stopwatch
 

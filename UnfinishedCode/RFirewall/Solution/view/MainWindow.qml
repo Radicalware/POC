@@ -5,6 +5,7 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 
+
 import Support
 import Constants
 
@@ -149,8 +150,8 @@ ApplicationWindow {
             id: mRuleView
             focus: true
 
-            z: -1
-            width: parent.width
+            z:              -1
+            width:          parent.width
             anchors.top:    mTopMenu.bottom
             anchors.left:   parent.left
             anchors.right:  parent.right

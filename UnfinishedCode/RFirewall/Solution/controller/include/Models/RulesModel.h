@@ -25,15 +25,15 @@ namespace Enum // Enumeration
 
 
 #define SetNewRuleParams() \
-    NewRule.ExeName         = WTXS(ExeName.toStdWString().c_str()); \
-    NewRule.FullPath        = WTXS(FullPath.toStdWString().c_str()); \
-    NewRule.RuleName        = WTXS(RuleName.toStdWString().c_str()); \
-    NewRule.Description     = WTXS(Description.toStdWString().c_str()); \
-    NewRule.ServiceName     = WTXS(ServiceName.toStdWString().c_str()); \
-    NewRule.Local.Address   = WTXS(LocalAddress.toStdWString().c_str()); \
-    NewRule.Local.Port      = WTXS(LocalPort.toStdWString().c_str()); \
-    NewRule.Remote.Address  = WTXS(RemoteAddress.toStdWString().c_str()); \
-    NewRule.Remote.Port     = WTXS(RemotePort.toStdWString().c_str());
+    NewRule.ExeName         = ExeName.toStdWString(); \
+    NewRule.FullPath        = FullPath.toStdWString(); \
+    NewRule.RuleName        = RuleName.toStdWString(); \
+    NewRule.Description     = Description.toStdWString(); \
+    NewRule.ServiceName     = ServiceName.toStdWString(); \
+    NewRule.Local.Address   = LocalAddress.toStdWString(); \
+    NewRule.Local.Port      = LocalPort.toStdWString(); \
+    NewRule.Remote.Address  = RemoteAddress.toStdWString(); \
+    NewRule.Remote.Port     = RemotePort.toStdWString();
 
 class RulesModel : public QAbstractListModel
 {
@@ -52,7 +52,7 @@ public:
     };
     Q_ENUM(RuleRole)
 
-    RulesModel(QObject *parent = nullptr);
+    RulesModel(QObject *parent);
 
     int rowCount(const QModelIndex& = QModelIndex()) const;
     QVariant GetData(const QModelIndex& index, int role = Qt::DisplayRole) const;
