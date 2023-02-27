@@ -1,4 +1,5 @@
 ﻿#include <QGuiApplication>
+#include <QQuickStyle>
 
 #define _uint_
 
@@ -13,6 +14,8 @@ int main(int argc, char *argv[])
     Begin();
     Nexus<>::Start();
     QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+    QQuickStyle::setStyle("Fusion");
+
     QGuiApplication LoApp(argc, argv);
     Core LoCore;
 

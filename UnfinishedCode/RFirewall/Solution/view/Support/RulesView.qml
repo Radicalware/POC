@@ -1,9 +1,6 @@
 
 import QtQuick
-import QtQuick.Window
 import QtQuick.Controls
-import QtQuick.Layouts
-import Qt5Compat.GraphicalEffects
 
 // todo fix: Can't use both c++ and qml versions at the same time
 import Backend        // Uses the .cpp version

@@ -1,25 +1,25 @@
 ﻿
-#include "Enum/Rule.h"
+#include "Scanner/Rule.h"
 #include "re2/re2.h"
 
 
-const RE2 Enum::Rule::ExePathPattern(R"(^.*[\\/])");
+const RE2 Scanner::Rule::ExePathPattern(R"(^.*[\\/])");
 
-Enum::Rule::Rule()
+Scanner::Rule::Rule()
 {
 }
 
-Enum::Rule::Rule(const Enum::Rule& Other)
+Scanner::Rule::Rule(const Scanner::Rule& Other)
 {
     *this = Other;
 }
 
-Enum::Rule::Rule(Enum::Rule&& Other) noexcept
+Scanner::Rule::Rule(Scanner::Rule&& Other) noexcept
 {
     *this = std::move(Other);
 }
 
-void Enum::Rule::operator=(const Enum::Rule& Other)
+void Scanner::Rule::operator=(const Scanner::Rule& Other)
 {
     ExeName = Other.ExeName;
     FullPath = Other.FullPath;
@@ -46,7 +46,7 @@ void Enum::Rule::operator=(const Enum::Rule& Other)
     EdgeTraversal = Other.EdgeTraversal;
 }
 
-void Enum::Rule::operator=(Enum::Rule&& Other)
+void Scanner::Rule::operator=(Scanner::Rule&& Other)
 {
     ExeName = std::move(Other.ExeName);
     FullPath = std::move(Other.FullPath);

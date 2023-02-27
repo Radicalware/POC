@@ -6,17 +6,17 @@
 // All of these are strings because all getters
 // from INetFwRule are return as strings;
 
-namespace Enum // Enumeration Lib set
+namespace Scanner
 {
     struct Rule
     {
         Rule();
-        Rule(const Enum::Rule & Other);
-        Rule(Enum::Rule && Other) noexcept;
+        Rule(const Scanner::Rule & Other);
+        Rule(Scanner::Rule && Other) noexcept;
 
-        void operator=(const Enum::Rule& Other);
-        void operator=(Enum::Rule&& Other);
-        bool operator==(const Enum::Rule& Other) const { return RuleName == Other.RuleName;  }
+        void operator=(const Scanner::Rule& Other);
+        void operator=(Scanner::Rule&& Other);
+        bool operator==(const Scanner::Rule& Other) const { return RuleName == Other.RuleName;  }
 
         static const RE2 ExePathPattern;
 

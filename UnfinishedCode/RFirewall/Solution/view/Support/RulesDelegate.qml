@@ -19,7 +19,7 @@ ItemDelegate {
         spacing: 10
 
         MLabel {
-            //color: index % 2 == 0 ? Constants.mTextColor : Constants.mTextColor
+            color: index % 2 == 0 ? Constants.mTextColor : Constants.mTextColor
             text: exeName
             font.bold: true
             elide: Text.ElideRight
@@ -123,6 +123,12 @@ ItemDelegate {
                 Layout.fillWidth: true
             }
         }
+    }
+    
+    background: Rectangle {
+        anchors.fill: parent
+        color: "#0100d4"
+        opacity: 0.5
     }
 
     states: [

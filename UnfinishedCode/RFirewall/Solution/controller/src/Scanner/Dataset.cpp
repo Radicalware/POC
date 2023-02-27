@@ -1,5 +1,5 @@
 ﻿#include "LocalMacros.h"
-#include "Enum/Rules.h"
+#include "Scanner/Dataset.h"
 
 #include "QString.h"
 
@@ -46,21 +46,24 @@ const xstring StrDisabled  = "False";
 using std::cout;
 using std::endl;
 
-size_t Enum::Rules::RuleCount = 0;
+size_t Scanner::Dataset::RuleCount = 0;
 
-Enum::Rules::Rules()
+Scanner::Dataset::Dataset()
 {
+    Begin();
     ScanRules();
+    Rescue();
 }
 
-Enum::Rules::~Rules()
+Scanner::Dataset::~Dataset()
 {
     Cleanup(0);
 }
 
 Q_INVOKABLE
-bool Enum::Rules::ScanRules()
+bool Scanner::Dataset::ScanRules()
 {
+    Begin();
     Reset();
     long fwRuleCount;
 
@@ -136,7 +139,8 @@ bool Enum::Rules::ScanRules()
             if (SUCCEEDED(hr)) hr = var.ChangeType(VT_DISPATCH);
             if (SUCCEEDED(hr)) hr = (V_DISPATCH(&var))->QueryInterface(__uuidof(INetFwRule), reinterpret_cast<void**>(&pFwRule));
             if (SUCCEEDED(hr) && pFwRule) {
-                NexusRules.AddJob(&Enum::Rules::ParseOutRule, pFwRule); // Output the properties of this rule
+                if(pFwRule)
+                    NexusRules.AddJob(&Scanner::Dataset::ParseOutRule, pFwRule); // Output the properties of this rule
             }
         }
 
@@ -151,15 +155,27 @@ bool Enum::Rules::ScanRules()
     NexusRules.WaitAll();
     RuleVec.reserve(NexusRules.Size()+1);
 
-    for (size_t i = 0; i < NexusRules.Size(); i++) {
-        if(!RuleVec.Has(NexusRules.Get(i).GetValue()))
-            RuleVec.Add(NexusRules.Get(i).Move());
+    auto LvRules = NexusRules.GetMoveAllIndices();
+
+    // Add values with name
+    for (auto& LoRulePtr : LvRules)
+    {
+        GET(LoRule);
+        if (!LoRule.ExeName)
+            LoRule.ExeName = "{NameLess}";
+        if (!RuleVec.Has(LoRule))
+            RuleVec.Add(LoRulePtr);
     }
+
+    RuleVec.Sort([](const auto& One, const auto& Two) { return One.ExeName > Two.ExeName; });
+
     return Cleanup(true); // success
+    Rescue();
 }
 
-HRESULT Enum::Rules::WfComInitialize(INetFwPolicy2** ppNetFwPolicy2)
+HRESULT Scanner::Dataset::WfComInitialize(INetFwPolicy2** ppNetFwPolicy2)
 {
+    Begin();
     HRESULT hr = S_OK;
 
     hr = CoCreateInstance(
@@ -173,11 +189,13 @@ HRESULT Enum::Rules::WfComInitialize(INetFwPolicy2** ppNetFwPolicy2)
         wprintf(L"CoCreateInstance for INetFwPolicy2 failed: 0x%08lx\n", hr);
 
     return hr;
+    Rescue();
 }
 
-Enum::Rule Enum::Rules::ParseOutRule(INetFwRule* FwRule)
+xp<Scanner::Rule> Scanner::Dataset::ParseOutRule(INetFwRule* FwRule)
 {
-    Enum::Rule Rule;
+    Begin();
+    NEW(LoRule, MKP<Scanner::Rule>());
 
     variant_t InterfaceArray;
     variant_t InterfaceString;
@@ -206,28 +224,28 @@ Enum::Rule Enum::Rules::ParseOutRule(INetFwRule* FwRule)
     ProfileMap[2].Name = L"Public";
 
     if (SUCCEEDED(FwRule->get_Name(&bstrVal)))
-        Rule.RuleName = bstrVal;
+        LoRule.RuleName = bstrVal;
 
     if (SUCCEEDED(FwRule->get_Description(&bstrVal)))
-        Rule.Description = bstrVal;
+        LoRule.Description = bstrVal;
 
     if (SUCCEEDED(FwRule->get_ApplicationName(&bstrVal))) {
-        Rule.FullPath = bstrVal;
-        Rule.ExeName = Rule.FullPath.Sub(Enum::Rule::ExePathPattern, xstring::static_class);
+        LoRule.FullPath = bstrVal;
+        LoRule.ExeName = LoRule.FullPath.Sub(Scanner::Rule::ExePathPattern, xstring::static_class);
     }
 
     if (SUCCEEDED(FwRule->get_ServiceName(&bstrVal)))
-        Rule.ServiceName = bstrVal;
+        LoRule.ServiceName = bstrVal;
 
     if (SUCCEEDED(FwRule->get_Protocol(&lVal)))
     {
         switch (lVal)
         {
         case NET_FW_IP_PROTOCOL_TCP:
-            Rule.IP_Protocol = StrTCP;
+            LoRule.IP_Protocol = StrTCP;
             break;
         case NET_FW_IP_PROTOCOL_UDP:
-            Rule.IP_Protocol = StrUDP;
+            LoRule.IP_Protocol = StrUDP;
             break;
         default:
             break;
@@ -236,20 +254,20 @@ Enum::Rule Enum::Rules::ParseOutRule(INetFwRule* FwRule)
         if (lVal != NET_FW_IP_VERSION_V4 && lVal != NET_FW_IP_VERSION_V6)
         {
             if (SUCCEEDED(FwRule->get_LocalPorts(&bstrVal)))
-                Rule.Local.Port = bstrVal;
+                LoRule.Local.Port = bstrVal;
 
             if (SUCCEEDED(FwRule->get_RemotePorts(&bstrVal)))
-                Rule.Remote.Port = bstrVal;
+                LoRule.Remote.Port = bstrVal;
         }
         else if (SUCCEEDED(FwRule->get_IcmpTypesAndCodes(&bstrVal)))
-                Rule.ICMP_TypeCode = bstrVal;
+            LoRule.ICMP_TypeCode = bstrVal;
     }
 
     if (SUCCEEDED(FwRule->get_LocalAddresses(&bstrVal)))
-        Rule.Local.Address = bstrVal;
+        LoRule.Local.Address = bstrVal;
 
     if (SUCCEEDED(FwRule->get_RemoteAddresses(&bstrVal)))
-        Rule.Remote.Address = bstrVal;
+        LoRule.Remote.Address = bstrVal;
 
     if (SUCCEEDED(FwRule->get_Profiles(&lProfileBitmask)))
     {
@@ -259,7 +277,7 @@ Enum::Rule Enum::Rules::ParseOutRule(INetFwRule* FwRule)
         for (int i = 0; i < 3; i++)
         {
             if (lProfileBitmask & ProfileMap[i].Id)
-                Rule.Profiles.Add(ProfileMap[i].Name);
+                LoRule.Profiles.Add(ProfileMap[i].Name);
             // todo: check the profile map and set bools for their types
         }
     }
@@ -270,11 +288,11 @@ Enum::Rule Enum::Rules::ParseOutRule(INetFwRule* FwRule)
         {
         case NET_FW_RULE_DIR_IN:
 
-            Rule.Direction = StrIn;
+            LoRule.Direction = StrIn;
             break;
 
         case NET_FW_RULE_DIR_OUT:
-            Rule.Direction = StrOut;
+            LoRule.Direction = StrOut;
             break;
         default:
             break;
@@ -286,11 +304,11 @@ Enum::Rule Enum::Rules::ParseOutRule(INetFwRule* FwRule)
         switch (fwAction)
         {
         case NET_FW_ACTION_BLOCK:
-            Rule.Action = StrBlock;
+            LoRule.Action = StrBlock;
             break;
 
         case NET_FW_ACTION_ALLOW:
-            Rule.Action = StrAllow;
+            LoRule.Action = StrAllow;
             break;
         default:
             break;
@@ -306,37 +324,39 @@ Enum::Rule Enum::Rules::ParseOutRule(INetFwRule* FwRule)
             for (long index = pSa->rgsabound->lLbound; index < (long)pSa->rgsabound->cElements; index++)
             {
                 SafeArrayGetElement(pSa, &index, &InterfaceString);
-                Rule.Interfaces.Add(InterfaceString.bstrVal);
+                LoRule.Interfaces.Add(InterfaceString.bstrVal);
             }
         }
     }
 
     if (SUCCEEDED(FwRule->get_InterfaceTypes(&bstrVal)))
-        Rule.InterfaceTypes = bstrVal;
+        LoRule.InterfaceTypes = bstrVal;
 
     if (SUCCEEDED(FwRule->get_Enabled(&bEnabled)))
     {
         if (bEnabled)
-            Rule.Enabled = StrEnabled;
+            LoRule.Enabled = StrEnabled;
         else
-            Rule.Enabled = StrDisabled;
+            LoRule.Enabled = StrDisabled;
     }
 
     if (SUCCEEDED(FwRule->get_Grouping(&bstrVal)))
-        Rule.Grouping = bstrVal;
+        LoRule.Grouping = bstrVal;
 
     if (SUCCEEDED(FwRule->get_EdgeTraversal(&bEnabled)))
     {
         if (bEnabled)
-            Rule.EdgeTraversal = StrEnabled;
+            LoRule.EdgeTraversal = StrEnabled;
         else
-            Rule.EdgeTraversal = StrDisabled;
+            LoRule.EdgeTraversal = StrDisabled;
     }
-    return Rule;
+    return LoRulePtr;
+    Rescue();
 }
 
-bool Enum::Rules::Cleanup(const bool Return)
+bool Scanner::Dataset::Cleanup(const bool Return)
 {
+    Begin();
     if (bIsClean)
         return Return;
 
@@ -353,10 +373,12 @@ bool Enum::Rules::Cleanup(const bool Return)
 
     bIsClean = true;
     return Return;
+    Rescue();
 }
 
-void Enum::Rules::Reset()
+void Scanner::Dataset::Reset()
 {
+    Begin();
     NexusRules.Clear();
 
     if (!bIsClean)
@@ -374,4 +396,5 @@ void Enum::Rules::Reset()
     pNetFwPolicy2 = nullptr;
     pFwRules = nullptr;
     pFwRule = nullptr;
+    Rescue();
 }

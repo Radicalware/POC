@@ -1,20 +1,19 @@
 
 import QtQuick
 
-import Constants 1.0
+// import Constants 1.0
 
 ListModel {
+
     ListElement {
-        exeName:        "Test QmlTest.exe"
-        fullPath:       "Test C:/Full/Path/QmlTest.exe"
-        ruleName:       "Test Rule Name"
-        description:    "Test Qml Test description"
-        serviceName:    "Test Qml Service Name"
-        localAddress:   "192.168.1.5"
-        localPort:      "4444"
-        remoteAddress:  "*"
-        remotePort:     "*"
+        ExeName:        "Test QmlTest.exe"
+        FullPath:       "Test C:/Full/Path/QmlTest.exe"
+        RuleName:       "Test Rule Name"
+        Description:    "Test Qml Test description"
+        ServiceName:    "Test Qml Service Name"
+        LocalAddress:   "192.168.1.5"
+        LocalPort:      "4444"
+        RemoteAddress:  "*"
+        RemotePort:     "*"
     }
 }
-
-

@@ -5,7 +5,6 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Qt5Compat.GraphicalEffects
 
-
 import Support
 import Constants
 
@@ -23,19 +22,33 @@ ApplicationWindow {
     property int mSelectedRule: -1
 
     visible: true
-    title: qsTr("Contact List")
+    title: qsTr("Firewall Manager")
 
     ManageRuleDialog {
         id: mManageRuleDialog
         onFinished: {
             if (mSelectedRule === -1)
-               mRuleView.model.append(exeName, fullPath, description, serviceName, 
-                                        localAddress, localPort, remoteAddress, remotePort)
+               mRulesView.model.append(
+                                    exeName, 
+                                    fullPath, 
+                                    description, 
+                                    serviceName, 
+                                    localAddress, 
+                                    localPort, 
+                                    remoteAddress, 
+                                    remotePort)
             else
-               mRuleView.model.set(exeName,  fullPath, description, serviceName,
-                                        localAddress, localPort, remoteAddress, remotePort)
+               mRulesView.model.set(
+                                exeName,  
+                                fullPath, 
+                                description, 
+                                serviceName,
+                                localAddress, 
+                                localPort, 
+                                remoteAddress, 
+                                remotePort)
         }
-    }
+    } // ManageRuleDialog
 
     // Menu objects >> Instantiated when mContactMenu.Open() is called
     Menu {
@@ -50,20 +63,20 @@ ApplicationWindow {
             font.bold: true
             width: parent.width
             horizontalAlignment: Qt.AlignHCenter
-            text: mSelectedRule >= 0 ? mRuleView.model.Get(mSelectedRule).fullName : ""
+            text: mSelectedRule >= 0 ? mRulesView.model.Get(mSelectedRule).fullName : ""
             color: Constants.mTextColor
         }
         MenuItem {
             text: qsTr("Edit...")
             font.pixelSize: Constants.mFontPixelSize
-            onTriggered: mManageRuleDialog.editContact(mRuleView.model.Get(mSelectedRule))
+            onTriggered: mManageRuleDialog.editContact(mRulesView.model.Get(mSelectedRule))
         }
         MenuItem {
             text: qsTr("Remove")
             font.pixelSize: Constants.mFontPixelSize
-            onTriggered: mRuleView.model.Remove(mSelectedRule)
+            onTriggered: mRulesView.model.Remove(mSelectedRule)
         }
-    }
+    } // Menu
 
     FocusScope // Vertical Box
     {
@@ -80,26 +93,27 @@ ApplicationWindow {
             anchors.top:    parent.top
             anchors.left:   parent.left
             anchors.right:  parent.right
-            anchors.bottom: mRuleView.top
+            anchors.bottom: mRulesView.top
 
             Button  {
                 id: mBtnStartSearch
 
-                onClicked: { 
-                    mRuleView.model.Clear();
-                    EnumRules.ScanRules();
-                    mRuleView.model.PopulateRules(EnumRules);
+                onClicked: {
+                    mRulesView.model.Clear();
+                    MoScanner.ScanRules();
+                    mRulesView.model.PopulateRules(MoScanner);
                 }
 
                 anchors.top: parent.top
                 anchors.left: parent.left
                 //anchors.right: mTopSpacer.left // based on width
                 anchors.bottom: parent.bottom
-                
+
                 // height: set by parent row
                 width: mTopMenu.mSizeMod * Constants.mFontPixelSize * text.length
-
+                
                 text: "Start Search"
+
                 contentItem: Text {
                     text: mBtnStartSearch.text
                     font.pointSize: mTopMenu.mSizeMod * Constants.mFontPixelSize
@@ -113,11 +127,11 @@ ApplicationWindow {
                 background: Image {
                     id: mStartBackdrop
                     anchors.fill: parent
-                    source:  parent.down ?
-                            "qrc:///resource/backdrops/StartBox/RedTextBox.png" :
-                            (parent.hovered ?
-                                "qrc:///resource/backdrops/StartBox/DarkTextBox.png" :
-                                "qrc:///resource/backdrops/StartBox/LightTextBox.png")
+                    source:  parent.down 
+                        ? "qrc:///resource/backdrops/StartBox/RedTextBox.png"
+                        : (parent.hovered 
+                            ? "qrc:///resource/backdrops/StartBox/DarkTextBox.png"
+                            : "qrc:///resource/backdrops/StartBox/LightTextBox.png")
                 }
             }
 
@@ -135,19 +149,19 @@ ApplicationWindow {
 
                 background: Image {
                     anchors.fill: parent
-                    source: parent.hovered ? "qrc:///resource/icons/RedX_on.png" : 
-                                             "qrc:///resource/icons/RedX_off.png"
+                    source: parent.hovered ? "qrc:///resource/icons/RedX_on.png"  
+                                           : "qrc:///resource/icons/RedX_off.png"
                 }
 
                 onClicked: {
                     Qt.quit()
                 }
             }
-        }
+        } // FocusScope
 
         // ListView >> RulesView.qml (model: RulesModel.cpp >> RulesModel.qml && delegate: RulesDelegate)
         RulesView {
-            id: mRuleView
+            id: mRulesView
             focus: true
 
             z:              -1
@@ -162,7 +176,7 @@ ApplicationWindow {
                 mContactMenu.Open()
             }
         }
-    }
+    } // FocusScope
 
     RoundButton {
         text: qsTr("+")
@@ -179,8 +193,8 @@ ApplicationWindow {
 
     background: Item {
         id: mBackground
-        // x: mRuleView.x
-        // y: mRuleView.y
+        // x: mRulesView.x
+        // y: mRulesView.y
         anchors.fill: parent
         z: -2
 

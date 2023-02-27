@@ -11,14 +11,10 @@
 #include <QQmlApplicationEngine>
 
 #include "Timer.h"
+#include "Scanner/Dataset.h"
 
 using std::cout;
 using std::endl;
-
-namespace Enum // Enumeration Lib set
-{
-    class Rules;
-};
 
 class Core : public QObject
 {
@@ -28,13 +24,7 @@ public:
     virtual ~Core();
     bool Initialize();
 
-    // -------------------------------------------------------------------------
-    // Invokables
 
-// public slots:
-//     Q_INVOKABLE void ScanFirewallRules();
-
-    // Invokables
     // -------------------------------------------------------------------------
     // QProperties Start 
 public:
@@ -50,8 +40,8 @@ public:
     // C++ Signals End
     // -------------------------------------------------------------------------
 private:
-    QQmlApplicationEngine mEngine;
-    Enum::Rules* mRulesPtr = nullptr;
-    RA::Timer    mTimer;
+    QQmlApplicationEngine MoEngine;
+    Scanner::Dataset*     MoScannerPtr = nullptr;
+    RA::Timer             MoTimer;
 };
 
