@@ -8,10 +8,11 @@
 #include "OS.h"
 #include "Timer.h"
 
-#include "Core.cuh"
+#include "GPUCore.cuh"
+#include "CPUCore.cuh"
 #include "SYS.h"
 
-// #include "vld.h"
+#include "vld.h"
 
 using std::cout;
 using std::endl;
@@ -24,6 +25,10 @@ void RetEarly(const char* Err)
     EXIT();
 }
 
+void TestCPU();
+void TestGPU();
+xstring GetPath();
+
 int main(int argc, char** argv)
 {
     Begin();
@@ -31,13 +36,36 @@ int main(int argc, char** argv)
 
     Args.AddAlias('p', "--Path");
     Args.AddAlias('i', "--Index");
+    Args.AddAlias('c', "--TestCPU");
+    Args.AddAlias('g', "--TestGPU");
+    Args.AddAlias('m', "--Multiplier");
+    Args.AddAlias('s', "--SingleCPU");
+
     Args.SetArgs(argc, argv);
 
+    if (Args.Has('c'))
+        TestCPU();
+    else if (Args.Has('g'))
+        TestGPU();
+    else if (!Args.Has('c') && !Args.Has('g'))
+    {
+        TestCPU();
+        TestGPU();
+    }
+
+    FinalRescue();
+    Nexus<>::Stop();
+    return 0;
+}
+
+xstring GetPath()
+{
+    Begin();
     auto LsPath = xstring();
     if (Args.Has('p'))
         LsPath = Args.Key('p').First();
     else
-        LsPath = "C:/Source/Study/CodingChallenges/Contracts/Amazon/Robotics/Data.csv";
+        LsPath = "C:/Source/git/POC/ProcessData/CSV/Data.csv";
 
     if (!LsPath.Match(R"(^.*(\.csv)$)"))
         RetEarly("File must be a csv type");
@@ -45,37 +73,69 @@ int main(int argc, char** argv)
     if (!RA::OS::HasFile(LsPath))
         RetEarly("Path not found");
 
-    auto LoCore = Core(LsPath);
-    LoCore.ReadData();
-    LoCore.ConfigureColumnValues();
-    
-    auto LoTime = RA::Timer();
-    LoCore.ParseResultsWtihCPU();
-    const auto LoSingleThreadData = LoCore.GetDataset(0);
-    cout << "Time Single Thread: " << LoTime.GetElapsedTimeMilliseconds() << endl;
-    LoTime.Reset();
-    LoCore.ParseThreadedResultsWtihCPU(true);
-    const auto LoMultiThreadData = LoCore.GetDataset(0);
-    cout << "Time Multi  Thread: " << LoTime.GetElapsedTimeMilliseconds() << endl;
+    return LsPath;
+    Rescue();
+}
 
+void TestAlgo(RA::Timer& FoTimer, APU::Core& FoCore)
+{
+    const auto LnMultiplierSize = (Args.Has('m') ? Args.Key('m').First().To64() : 1);
+    FoCore.ReadData(LnMultiplierSize);
+    FoCore.ConfigureColumnValues();
+
+    FoTimer.Reset();
+    FoCore.ParseResults();
+    const auto LoSingleThreadData = FoCore.GetDataset(0);
+    //LoTime.Reset();
+    //FoCore.ParseThreadedResultsWtihCPU(true);
+    //const auto LoMultiThreadData = FoCore.GetDataset(0);
+    //cout << "Time Multi  Thread: " << LoTime.GetElapsedTimeMilliseconds() << endl;
+
+    Rescue();
+}
+
+xint GetTargetIndex()
+{
     xint LnIdx = 0;
     if (Args.Has('i'))
     {
         LnIdx = Args.Key('i').First().To64();
         cout << "Inspecting: " << LnIdx << endl;
     }
-    cout << LoCore.GetDataset(LnIdx) << endl;
-
-    cout << "------------------------" << endl;
-    cout << LoSingleThreadData << endl;
-    cout << "------------------------" << endl;
-    cout << LoMultiThreadData << endl;
-    cout << "------------------------" << endl;
-    cout << LoCore.GetDataset(LnIdx) << endl;
-    cout << "------------------------" << endl;
-
-    FinalRescue();
-    Nexus<>::Stop();
-    return 0;
+    return LnIdx;
 }
 
+void TestCPU()
+{
+    Begin();
+    cout << "Running: " << __CLASS__ << '\n';
+
+    const auto LbSingleGPU = Args.Has('s');
+    const auto LbMultiGPU = !LbSingleGPU;
+    xp<APU::Core> LoCorePtr = MKP<CPU::Core>(GetPath(), LbMultiGPU);
+    GET(LoCore);
+    auto LoTimer = RA::Timer();
+    TestAlgo(LoTimer, LoCore);
+    cout << "Time Single Thread CPU: " << LoTimer.GetElapsedTimeMilliseconds() << endl;
+
+    auto LnIdx = GetTargetIndex();
+    cout << LoCore.GetDataset(LnIdx) << endl;
+
+    Rescue();
+}
+
+void TestGPU()
+{
+    Begin();
+    cout << "Running: " << __CLASS__ << '\n';
+
+    xp<APU::Core> LoCorePtr = MKP<GPU::Core>(GetPath());
+    GET(LoCore);
+    auto LoTimer = RA::Timer();
+    TestAlgo(LoTimer, LoCore);
+    cout << "Time Multi Thread GPU: " << LoTimer.GetElapsedTimeMilliseconds() << endl;
+
+    auto LnIdx = GetTargetIndex();
+    cout << LoCore.GetDataset(LnIdx) << endl;
+    Rescue();
+}
