@@ -53,14 +53,15 @@ void GPU::Core::ParseResults(const bool FbForceRestart)
     if(!FbForceRestart)
         if (MbParsed && MoDevice.MoResultStats.Size())
             return;
-    //CudaDelete(MoDevice.MvResultData);
 
     const auto LnRetAllocate = RA::Allocate(GetColumnCount(), sizeof(ColumnData));
-    //MoDevice.MvResultData = RA::Host::AllocateArrOnDevice<ColumnData>(LnRetAllocate);
+    const auto LmStatOps = xmap<RA::EStatOpt, xint>{
+        {RA::EStatOpt::AVG, 0},{RA::EStatOpt::STOCH, 0},{RA::EStatOpt::SD, 0}
+    };
 
     MoHost.MvStatsGPU = MKP<RA::StatsGPU[]>(GetColumnCount());
     for (auto& LoStat : MoHost.MvStatsGPU)
-        LoStat.Construct(0, { {RA::EStatOpt::AVG, 0},{RA::EStatOpt::STOCH, 0},{RA::EStatOpt::SD, 0} });
+        LoStat.Construct(0, LmStatOps);
 
     MoDevice.MoResultStats = RA::CudaBridge<RA::StatsGPU>(MoHost.MvStatsGPU, MoHost.MvStatsGPU.GetLength());
     MoDevice.MoResultStats.AllocateHost();

@@ -43,15 +43,18 @@ int main(int argc, char** argv)
 
     Args.SetArgs(argc, argv);
 
-    if (Args.Has('c'))
-        TestCPU();
-    else if (Args.Has('g'))
-        TestGPU();
-    else if (!Args.Has('c') && !Args.Has('g'))
+    bool LbParseCPU = Args.Has('c');
+    bool LbParseGPU = Args.Has('g');
+    if (!LbParseCPU && !LbParseGPU)
     {
-        TestCPU();
-        TestGPU();
+        LbParseCPU = true;
+        LbParseGPU = true;
     }
+
+    if (LbParseCPU)
+        TestCPU();
+    if (LbParseGPU)
+        TestGPU();
 
     FinalRescue();
     Nexus<>::Stop();
@@ -64,8 +67,10 @@ xstring GetPath()
     auto LsPath = xstring();
     if (Args.Has('p'))
         LsPath = Args.Key('p').First();
+#if BxDebug
     else
         LsPath = "C:/Source/git/POC/ProcessData/CSV/Data.csv";
+#endif
 
     if (!LsPath.Match(R"(^.*(\.csv)$)"))
         RetEarly("File must be a csv type");
@@ -85,11 +90,6 @@ void TestAlgo(RA::Timer& FoTimer, APU::Core& FoCore)
 
     FoTimer.Reset();
     FoCore.ParseResults();
-    const auto LoSingleThreadData = FoCore.GetDataset(0);
-    //LoTime.Reset();
-    //FoCore.ParseThreadedResultsWtihCPU(true);
-    //const auto LoMultiThreadData = FoCore.GetDataset(0);
-    //cout << "Time Multi  Thread: " << LoTime.GetElapsedTimeMilliseconds() << endl;
 
     Rescue();
 }
@@ -116,7 +116,12 @@ void TestCPU()
     GET(LoCore);
     auto LoTimer = RA::Timer();
     TestAlgo(LoTimer, LoCore);
-    cout << "Time Single Thread CPU: " << LoTimer.GetElapsedTimeMilliseconds() << endl;
+
+    if(LbMultiGPU)
+        cout << "Time Multi Thread CPU: " << LoTimer.GetElapsedTimeMilliseconds() << endl;
+    else
+        cout << "Time Single Thread CPU: " << LoTimer.GetElapsedTimeMilliseconds() << endl;
+
 
     auto LnIdx = GetTargetIndex();
     cout << LoCore.GetDataset(LnIdx) << endl;
