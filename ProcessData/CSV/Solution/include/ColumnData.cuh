@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Macros.h"
+#include "StatsCPU.cuh"
 #include "StatsGPU.cuh"
 
 namespace GPU
@@ -25,20 +26,18 @@ struct ColumnSummary
     double Max = 0;
     double Sum = 0;
 
+    bool operator==(const ColumnSummary& Other) const;
 
-    TTT IXF void Set(const xint FnCount, const T& FoStats);
+    // Method works but gives warnings
+    // TTT IXF void Set(const xint FnCount, const T& FoStats);
+
+    DHF void SetCPU(const xint FnCount, const RA::StatsCPU& FoStats);
+    DDF void SetGPU(const xint FnCount, const RA::StatsGPU& FoStats);
 };
 
 std::ostream& operator<<(std::ostream& out, const ColumnSummary& FoData);
 
-TTT IXF void ColumnSummary::Set(const xint FnCount, const T& FoStats)
-{
-    Count = FnCount;
-    Max = FoStats.STOCH().GetMax();
-    Min = FoStats.STOCH().GetMin();
-    Mean = FoStats.GetAVG();
-    SD = FoStats.SD().GetDeviation();
-    Variance = FoStats.SD().GetAvgOffset();
-    Sum = FoStats.AVG().GetSum();
-}
-
+//TTT IXF void ColumnSummary::Set(const xint FnCount, const T& FoStats)
+//{
+//    CopyStatsToColumnSummary();
+//}

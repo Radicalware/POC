@@ -12,22 +12,46 @@
 #include "CPUCore.cuh"
 #include "SYS.h"
 
+#if BxDebug
 #include "vld.h"
+#endif
 
 using std::cout;
 using std::endl;
 
 RA::SYS Args;
 
-void RetEarly(const char* Err)
+void ExitEarly(const char* Err)
 {
     cout << Err << endl;
     EXIT();
 }
 
-void TestCPU();
-void TestGPU();
-xstring GetPath();
+
+class Test
+{
+public:
+    istatic xstring SoPath;
+public:
+
+    istatic RA::Mutex SoMutex;
+    istatic sp<APU::Core> SoCoreCPUPtr;
+    istatic sp<APU::Core> SoCoreGPUPtr;
+
+    istatic void Prep(const char* FsPlatform, APU::Core& FoCore);
+
+    istatic void PrepCPU();
+    istatic void PrepGPU();
+
+    istatic void RunCPU();
+    istatic void RunGPU();
+
+    istatic void CheckValues();
+
+    istatic xint GetTargetIndex();
+    istatic void SetPath();
+    istatic auto GetPath() { return SoPath; }
+};
 
 int main(int argc, char** argv)
 {
@@ -51,50 +75,101 @@ int main(int argc, char** argv)
         LbParseGPU = true;
     }
 
+#ifdef BxDebug
+    //LbParseCPU = true;  // true, false
+    //LbParseGPU = false; // true, false
+#endif
+
+    Test::SetPath();
     if (LbParseCPU)
-        TestCPU();
+#if BxDebug
+        Test::PrepCPU();
+#else
+        Nexus<void>::AddTask(&Test::PrepCPU);
+#endif
     if (LbParseGPU)
-        TestGPU();
+#if BxDebug
+        Test::PrepGPU();
+#else
+        Nexus<void>::AddTask(&Test::PrepGPU);
+#endif
+    if (!LbParseCPU && !LbParseGPU)
+        ExitEarly("No Selection");
+    Nexus<void>::WaitAll();
+    cout << "\n\n";
+
+    if (LbParseCPU)
+        Test::RunCPU();
+    if (LbParseGPU)
+        Test::RunGPU();
+
+    if (LbParseCPU && LbParseGPU)
+        Test::CheckValues();
 
     FinalRescue();
     Nexus<>::Stop();
     return 0;
 }
 
-xstring GetPath()
+void Test::SetPath()
 {
     Begin();
-    auto LsPath = xstring();
+    SoPath = xstring();
     if (Args.Has('p'))
-        LsPath = Args.Key('p').First();
+        SoPath = Args.Key('p').First();
 #if BxDebug
     else
-        LsPath = "C:/Source/git/POC/ProcessData/CSV/Data.csv";
+        SoPath = "C:/Source/git/POC/ProcessData/CSV/Data.csv";
 #endif
 
-    if (!LsPath.Match(R"(^.*(\.csv)$)"))
-        RetEarly("File must be a csv type");
+    if (!SoPath.Match(R"(^.*(\.csv)$)"))
+        ExitEarly("File must be a csv type");
 
-    if (!RA::OS::HasFile(LsPath))
-        RetEarly("Path not found");
+    if (!RA::OS::HasFile(SoPath))
+        ExitEarly("Path not found");
 
-    return LsPath;
     Rescue();
 }
 
-void TestAlgo(RA::Timer& FoTimer, APU::Core& FoCore)
+void Test::Prep(const char* FsPlatform, APU::Core& FoCore)
 {
+    auto LoTimer = RA::Timer();
     const auto LnMultiplierSize = (Args.Has('m') ? Args.Key('m').First().To64() : 1);
     FoCore.ReadData(LnMultiplierSize);
+    {
+        Test::SoMutex.Wait();
+        auto LoLock = Test::SoMutex.CreateLock();
+        cout << FsPlatform << "Read Data Sec: " << RA::FormatNum(LoTimer.GetElapsedTimeSeconds()) << endl;
+
+    }
+
+    LoTimer.Reset();
     FoCore.ConfigureColumnValues();
+    {
+        Test::SoMutex.Wait();
+        auto LoLock = Test::SoMutex.CreateLock();
+        cout << FsPlatform << "Config Data Sec: " << RA::FormatNum(LoTimer.GetElapsedTimeSeconds()) << endl;
 
-    FoTimer.Reset();
-    FoCore.ParseResults();
-
-    Rescue();
+    }
 }
 
-xint GetTargetIndex()
+void Test::PrepCPU()
+{
+    const auto LbSingleCPU = Args.Has('s');
+    const auto LbMultiCPU = !LbSingleCPU;
+    SoCoreCPUPtr = MKP<CPU::Core>(SoPath, LbMultiCPU);
+    GET(SoCoreCPU);
+    Test::Prep("CPU", SoCoreCPU);
+}
+
+void Test::PrepGPU()
+{
+    SoCoreGPUPtr = MKP<GPU::Core>(SoPath);
+    GET(SoCoreGPU);
+    Test::Prep("GPU", SoCoreGPU);
+}
+
+xint Test::GetTargetIndex()
 {
     xint LnIdx = 0;
     if (Args.Has('i'))
@@ -105,42 +180,78 @@ xint GetTargetIndex()
     return LnIdx;
 }
 
-void TestCPU()
+void Test::RunCPU()
 {
     Begin();
     cout << "Running: " << __CLASS__ << '\n';
-
-    const auto LbSingleGPU = Args.Has('s');
-    const auto LbMultiGPU = !LbSingleGPU;
-    xp<APU::Core> LoCorePtr = MKP<CPU::Core>(GetPath(), LbMultiGPU);
-    GET(LoCore);
+    
+    GET(SoCoreCPU);
     auto LoTimer = RA::Timer();
-    TestAlgo(LoTimer, LoCore);
+    SoCoreCPU.ParseResults();
 
-    if(LbMultiGPU)
-        cout << "Time Multi Thread CPU: " << LoTimer.GetElapsedTimeMilliseconds() << endl;
+    const auto LbSingleCPU = Args.Has('s');
+    if (LbSingleCPU)
+    {
+        cout << "Time Single Thread CPU Sec: " << RA::FormatNum(LoTimer.GetElapsedTimeSeconds()) << endl;
+        cout << "Time Single Thread CPU MS : " << RA::FormatNum(LoTimer.GetElapsedTimeMilliseconds()) << endl;
+    }
     else
-        cout << "Time Single Thread CPU: " << LoTimer.GetElapsedTimeMilliseconds() << endl;
-
+    {
+        cout << "Time Multi Thread CPU Sec: " << RA::FormatNum(LoTimer.GetElapsedTimeSeconds()) << endl;
+        cout << "Time Multi Thread CPU MS : " << RA::FormatNum(LoTimer.GetElapsedTimeMilliseconds()) << endl;
+    }
 
     auto LnIdx = GetTargetIndex();
-    cout << LoCore.GetDataset(LnIdx) << endl;
+    cout << SoCoreCPU.GetDataset(LnIdx) << endl;
 
     Rescue();
 }
 
-void TestGPU()
+void Test::RunGPU()
 {
     Begin();
     cout << "Running: " << __CLASS__ << '\n';
 
-    xp<APU::Core> LoCorePtr = MKP<GPU::Core>(GetPath());
-    GET(LoCore);
+    GET(SoCoreGPU);
     auto LoTimer = RA::Timer();
-    TestAlgo(LoTimer, LoCore);
-    cout << "Time Multi Thread GPU: " << LoTimer.GetElapsedTimeMilliseconds() << endl;
+    SoCoreGPU.ParseResults();
+    cout << "Time Multi Thread GPU Sec: " << RA::FormatNum(LoTimer.GetElapsedTimeSeconds()) << endl;
+    cout << "Time Multi Thread GPU MS : " << RA::FormatNum(LoTimer.GetElapsedTimeMilliseconds()) << endl;
 
     auto LnIdx = GetTargetIndex();
-    cout << LoCore.GetDataset(LnIdx) << endl;
+    cout << SoCoreGPU.GetDataset(LnIdx) << endl;
+    Rescue();
+}
+
+void Test::CheckValues()
+{
+    Begin();
+    GET(SoCoreCPU);
+    GET(SoCoreGPU);
+
+    if (SoCoreCPU.GetColumnCount() != SoCoreGPU.GetColumnCount())
+        ThrowIt("Bad Col Count: ", SoCoreCPU.GetColumnCount(), " != ", SoCoreGPU.GetColumnCount());
+    if (SoCoreCPU.GetRowCount() != SoCoreGPU.GetRowCount())
+        ThrowIt("Bad Col Count: ", SoCoreCPU.GetRowCount(), " != ", SoCoreGPU.GetRowCount());
+
+    const auto LnColCount = SoCoreGPU.GetColumnCount();
+
+    auto LbBadTest = false;
+    for (xint Col = 0; Col < LnColCount; Col++)
+    {
+        if (SoCoreCPU.GetDataset(Col) != SoCoreGPU.GetDataset(Col))
+        {
+            LbBadTest = true;
+            cout << "Bad Case Idx: " << Col << endl;
+            cout << "CPU ------------------------" << endl;
+            cout << SoCoreCPU.GetDataset(Col) << endl;
+            cout << "GPU ------------------------" << endl;
+            cout << SoCoreGPU.GetDataset(Col) << endl;
+        }
+    }
+
+    if (!LbBadTest)
+        cout << "\nNo Bad Checks!!\n\n";
+
     Rescue();
 }

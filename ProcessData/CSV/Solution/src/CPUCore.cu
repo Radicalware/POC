@@ -72,13 +72,17 @@ void CPU::Core::ParseResults(const bool FbForceRestart)
     const auto LmStatOps = xmap<RA::EStatOpt, xint>{ 
         {RA::EStatOpt::AVG, 0},{RA::EStatOpt::STOCH, 0},{RA::EStatOpt::SD, 0} 
     };
-    const xint LnZero = 0;
     MoHost.MvStatsCPU = MKP<RA::StatsCPU[]>(GetColumnCount()/*, 0, LmStatOps*/);
+
+#ifdef BxDebug
+    MbMultiCPU = false;
+#endif // BxDebug
+
 
     if (MbMultiCPU)
     {
-        for (RA::StatsCPU& LoStat : MoHost.MvStatsCPU)
-            Nexus<void>::AddTask(LoStat, &RA::StatsCPU::Construct, LnZero, LmStatOps, LnZero);
+        for (auto& LoStat : MoHost.MvStatsCPU)
+            LoStat.Construct(0, LmStatOps);
 
         MvRange.LoopAllUnseq(
             [this](const xint FnCol)
@@ -86,7 +90,7 @@ void CPU::Core::ParseResults(const bool FbForceRestart)
         );
 
         MvRange.LoopAllUnseq([this](const xint FnCol)
-            { The.MoHost.MvSummaries[FnCol].Set(GetRowCount(), MoHost.MvStatsCPU[FnCol]); }
+            { The.MoHost.MvSummaries[FnCol].SetCPU(GetRowCount(), MoHost.MvStatsCPU[FnCol]); }
         );
     }
     else
@@ -99,7 +103,7 @@ void CPU::Core::ParseResults(const bool FbForceRestart)
         );
 
         MvRange.Proc([this](const xint FnCol)
-            { The.MoHost.MvSummaries[FnCol].Set(GetRowCount(), MoHost.MvStatsCPU[FnCol]); return false; }
+            { The.MoHost.MvSummaries[FnCol].SetCPU(GetRowCount(), MoHost.MvStatsCPU[FnCol]); return false; }
         );
     }
 

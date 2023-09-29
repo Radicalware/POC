@@ -27,7 +27,8 @@ namespace APU
     protected:
         struct Host
         {
-            xvector<xvector<xstring>> MvColumnValuesStr; // From the CSV file
+            xvector<xvector<xstring>> MvCSVColumnValuesStr; // From the CSV file
+            xvector<xvector<double>>  MvCSVColumnValues;
             xvector<xvector<double>>  MvColumnValues; // converted
 
             xvector<ColumnSummary>    MvSummaries; // converted
@@ -44,6 +45,7 @@ namespace APU
         xint    MnColumnCount = 0;
         xint    MnRowCount = 0;
         xvector<xint> MvRange;
+        bool MbRead = false;
         bool MbParsed = false;
     };
 }

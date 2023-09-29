@@ -11,6 +11,7 @@ __global__ void GPU::ParseResultColumnIdx(
     auto Col = RA::Device::GetThreadID();
     if (Col >= FnColumnCount)
         return;
+    
     const auto& LvColumnValues = FvColumnData[Col];
     auto& LoStats = FvStats[Col];
     auto& LoSummary = FvSummaries[Col];
@@ -18,7 +19,7 @@ __global__ void GPU::ParseResultColumnIdx(
     for (xint i = 0; i < FnRowCount; i++)
         LoStats << LvColumnValues.MvDeviceRows[i];
     
-    LoSummary.Set(FnRowCount, LoStats);
+    LoSummary.SetGPU(FnRowCount, LoStats);
 }
 
 GPU::Core::Core(const xstring& FsFilePath): APU::Core(FsFilePath)
@@ -69,7 +70,7 @@ void GPU::Core::ParseResults(const bool FbForceRestart)
     MoDevice.MoResultStats.CopyHostToDeviceAsync();
     MoDevice.MoResultStats.SyncStream();
 
-    const auto [LnGrid, LnBlock] = RA::Host::GetDimensions3D(GetColumnCount());
+    const auto [LnGrid, LnBlock] = RA::Host::GetDimensions1D(GetColumnCount());
     MoDevice.MoColumnSummaries = RA::CudaBridge<ColumnSummary>::ARRAY::RunGPU(
         RA::Allocate(GetColumnCount(), sizeof(ColumnSummary)),
         LnGrid, LnBlock,
@@ -77,7 +78,7 @@ void GPU::Core::ParseResults(const bool FbForceRestart)
         MoDevice.MoResultStats.GetDevice(),
         MoDevice.MvColumnData, GetColumnCount(), GetRowCount()
     );
-    RA::CudaBridge<ColumnSummary>::SyncAll();
+    MoDevice.MoColumnSummaries.SyncStream();
     MoDevice.MoColumnSummaries.CopyDeviceToHost();
     MoDevice.MoColumnSummaries.SyncAll();
 
