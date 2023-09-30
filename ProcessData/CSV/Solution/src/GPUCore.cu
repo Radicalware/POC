@@ -3,6 +3,8 @@
 #include "OS.h"
 #include "CudaBridge.cuh"
 
+#include <cmath>
+
 __global__ void GPU::ParseResultColumnIdx(
     ColumnSummary* FvSummaries, 
     RA::StatsGPU* FvStats, const ColumnData* FvColumnData, 
@@ -24,6 +26,7 @@ __global__ void GPU::ParseResultColumnIdx(
 
 GPU::Core::Core(const xstring& FsFilePath): APU::Core(FsFilePath)
 {
+    const auto [LnGrid, LnBlock] = GetGridBlockConfig(20000);
 }
 
 GPU::Core::~Core()
@@ -70,7 +73,11 @@ void GPU::Core::ParseResults(const bool FbForceRestart)
     MoDevice.MoResultStats.CopyHostToDeviceAsync();
     MoDevice.MoResultStats.SyncStream();
 
-    const auto [LnGrid, LnBlock] = RA::Host::GetDimensions1D(GetColumnCount());
+    //const auto [LnGrid, LnBlock] = RA::Host::GetDimensions3D(GetColumnCount());
+    cout << "Column Count: " << GetColumnCount() << endl;
+    const auto [LnGrid, LnBlock] = GetGridBlockConfig();
+    
+
     MoDevice.MoColumnSummaries = RA::CudaBridge<ColumnSummary>::ARRAY::RunGPU(
         RA::Allocate(GetColumnCount(), sizeof(ColumnSummary)),
         LnGrid, LnBlock,
@@ -83,6 +90,83 @@ void GPU::Core::ParseResults(const bool FbForceRestart)
     MoDevice.MoColumnSummaries.SyncAll();
 
     Rescue();
+}
+
+std::tuple<dim3, dim3> GPU::Core::GetGridBlockConfig(const xint FnDbgVal) const
+{
+    const auto LnColumnCount = (FnDbgVal) ? FnDbgVal : GetColumnCount();
+    auto LnDown6 = RA::Pow(LnColumnCount, 1.0 / 6.0);
+    while (RA::Pow(LnDown6, 6.0) < LnColumnCount)
+        LnDown6++;
+
+    const auto LnTarget = RA::Pow(LnDown6, 3.0);
+    auto LnDown3 = RA::Pow(LnTarget, 1.0 / 3.0);
+    while (RA::Pow(LnDown3, 3.0) < LnTarget)
+        LnDown3++;
+
+    auto LnGrid = dim3(LnDown6, LnDown6, LnDown6);
+
+    auto LnX = LnDown3;
+    auto LnY = LnDown3;
+    auto LnZ = LnDown3;
+
+    // find min block
+    while ((pow(LnDown6, 3) * LnX * LnY * LnZ) > LnColumnCount)
+    {
+        if (LnY >= LnZ)
+            LnZ--;
+        else if (LnX >= LnY)
+            LnY--;
+        else
+            LnX--;
+    }
+    // increase to hold enough values
+    while (
+        ((pow(LnDown6, 3) * LnX * LnY * LnZ) < LnColumnCount) 
+        || ((LnX * LnY * LnZ) % 32 != 0))
+    {
+        if (LnY >= LnX)
+            LnX++;
+        else if (LnY >= LnZ)
+            LnY++;
+        else
+            LnZ++;
+    }
+    auto LnBlock = dim3(LnX, LnY, LnZ);
+
+    LnX = LnDown3;
+    LnY = LnDown3;
+    LnZ = LnDown3;
+    while ((LnBlock.x * LnBlock.y * LnBlock.z * LnX * LnY * LnZ) > LnColumnCount)
+    {
+        if (LnY >= LnZ)
+            LnZ--;
+        else if (LnX >= LnY)
+            LnY--;
+        else
+            LnX--;
+    }
+    while (
+        ((LnBlock.x * LnBlock.y * LnBlock.z * LnX * LnY * LnZ) < LnColumnCount)
+        /*|| ((LnX * LnY * LnZ) % 32 != 0)*/)
+    {
+        if (LnY >= LnX)
+            LnX++;
+        else if (LnY >= LnZ)
+            LnY++;
+        else
+            LnZ++;
+    }
+    LnGrid.x = LnX;
+    LnGrid.y = LnY;
+    LnGrid.z = LnZ;
+
+
+    RA::Print("Grid/Block: ",
+        "(", LnGrid.x, ',', LnGrid.y, ',', LnGrid.z, ")",
+        "(", LnBlock.x, ',', LnBlock.y, ',', LnBlock.z, ")");
+
+    return std::make_tuple(LnGrid, LnBlock);
 }
 
 CST ColumnSummary& GPU::Core::GetDataset(const xint FnValue) CST

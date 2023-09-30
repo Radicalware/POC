@@ -7,6 +7,8 @@
 #include "ColumnData.cuh"
 #include "Core.cuh"
 
+#include <tuple>
+
 namespace GPU
 {
     __global__ void ParseResultColumnIdx(
@@ -24,7 +26,7 @@ namespace GPU
 
         VIR CST ColumnSummary& GetDataset(const xint FnValue) CST;
     private:
-
+        std::tuple<dim3, dim3> GetGridBlockConfig(const xint FnDbgVal = 0) const;
         struct Device
         {
             ColumnData* MvColumnData = nullptr;

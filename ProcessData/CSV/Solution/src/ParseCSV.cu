@@ -34,6 +34,16 @@ public:
     istatic xstring SoPath;
 public:
 
+    class Timers
+    {
+    public:
+        istatic double SnLoadGPUVals = 0;
+        istatic double SnLoadCPUVals = 0;
+
+        istatic double SnParseGPU = 0;
+        istatic double SnParseCPU = 0;
+    };
+
     istatic RA::Mutex SoMutex;
     istatic sp<APU::Core> SoCoreCPUPtr;
     istatic sp<APU::Core> SoCoreGPUPtr;
@@ -75,6 +85,8 @@ int main(int argc, char** argv)
         LbParseGPU = true;
     }
 
+    const bool LbTestBoth = (LbParseCPU && LbParseGPU);
+
 #ifdef BxDebug
     //LbParseCPU = true;  // true, false
     //LbParseGPU = false; // true, false
@@ -98,13 +110,34 @@ int main(int argc, char** argv)
     Nexus<void>::WaitAll();
     cout << "\n\n";
 
+    if (LbTestBoth)
+    {
+        cout << "CPU/GPU Load Time: "
+            << RA::FormatNum(Test::Timers::SnLoadCPUVals / Test::Timers::SnLoadGPUVals, 4) << endl;
+        cout << "GPU/CPU Load Time: "
+            << RA::FormatNum(Test::Timers::SnLoadGPUVals / Test::Timers::SnLoadCPUVals, 4) << endl;
+        cout << "\n\n";
+    }
+
     if (LbParseCPU)
         Test::RunCPU();
     if (LbParseGPU)
         Test::RunGPU();
 
+    if (LbTestBoth)
+    {
+        cout << "CPU/GPU  Run  Time: "
+            << RA::FormatNum(Test::Timers::SnParseCPU / Test::Timers::SnParseGPU, 4) << endl;
+        cout << "CPU/GPU Total Time: "
+            << RA::FormatNum((Test::Timers::SnLoadCPUVals + Test::Timers::SnParseCPU) 
+                / (Test::Timers::SnLoadGPUVals + Test::Timers::SnParseGPU), 4) << endl;
+        cout << "\n\n";
+    }
+
+#if BxDebug
     if (LbParseCPU && LbParseGPU)
         Test::CheckValues();
+#endif
 
     FinalRescue();
     Nexus<>::Stop();
@@ -139,7 +172,7 @@ void Test::Prep(const char* FsPlatform, APU::Core& FoCore)
     {
         Test::SoMutex.Wait();
         auto LoLock = Test::SoMutex.CreateLock();
-        cout << FsPlatform << "Read Data Sec: " << RA::FormatNum(LoTimer.GetElapsedTimeSeconds()) << endl;
+        cout << FsPlatform << "Read Data MS: " << RA::FormatNum(LoTimer.GetElapsedTimeMilliseconds()) << endl;
 
     }
 
@@ -148,7 +181,7 @@ void Test::Prep(const char* FsPlatform, APU::Core& FoCore)
     {
         Test::SoMutex.Wait();
         auto LoLock = Test::SoMutex.CreateLock();
-        cout << FsPlatform << "Config Data Sec: " << RA::FormatNum(LoTimer.GetElapsedTimeSeconds()) << endl;
+        cout << FsPlatform << "Config Data MS: " << RA::FormatNum(LoTimer.GetElapsedTimeMilliseconds()) << endl;
 
     }
 }
@@ -159,14 +192,18 @@ void Test::PrepCPU()
     const auto LbMultiCPU = !LbSingleCPU;
     SoCoreCPUPtr = MKP<CPU::Core>(SoPath, LbMultiCPU);
     GET(SoCoreCPU);
+    auto LoTimer = RA::Timer();
     Test::Prep("CPU", SoCoreCPU);
+    Timers::SnLoadCPUVals = LoTimer.GetElapsedTimeMilliseconds();
 }
 
 void Test::PrepGPU()
 {
     SoCoreGPUPtr = MKP<GPU::Core>(SoPath);
     GET(SoCoreGPU);
+    auto LoTimer = RA::Timer();
     Test::Prep("GPU", SoCoreGPU);
+    Timers::SnLoadGPUVals = LoTimer.GetElapsedTimeMilliseconds();
 }
 
 xint Test::GetTargetIndex()
@@ -188,18 +225,12 @@ void Test::RunCPU()
     GET(SoCoreCPU);
     auto LoTimer = RA::Timer();
     SoCoreCPU.ParseResults();
-
+    Timers::SnParseCPU = LoTimer.GetElapsedTimeMicroseconds();
     const auto LbSingleCPU = Args.Has('s');
     if (LbSingleCPU)
-    {
-        cout << "Time Single Thread CPU Sec: " << RA::FormatNum(LoTimer.GetElapsedTimeSeconds()) << endl;
         cout << "Time Single Thread CPU MS : " << RA::FormatNum(LoTimer.GetElapsedTimeMilliseconds()) << endl;
-    }
     else
-    {
-        cout << "Time Multi Thread CPU Sec: " << RA::FormatNum(LoTimer.GetElapsedTimeSeconds()) << endl;
         cout << "Time Multi Thread CPU MS : " << RA::FormatNum(LoTimer.GetElapsedTimeMilliseconds()) << endl;
-    }
 
     auto LnIdx = GetTargetIndex();
     cout << SoCoreCPU.GetDataset(LnIdx) << endl;
@@ -215,7 +246,7 @@ void Test::RunGPU()
     GET(SoCoreGPU);
     auto LoTimer = RA::Timer();
     SoCoreGPU.ParseResults();
-    cout << "Time Multi Thread GPU Sec: " << RA::FormatNum(LoTimer.GetElapsedTimeSeconds()) << endl;
+    Timers::SnParseGPU = LoTimer.GetElapsedTimeMicroseconds();
     cout << "Time Multi Thread GPU MS : " << RA::FormatNum(LoTimer.GetElapsedTimeMilliseconds()) << endl;
 
     auto LnIdx = GetTargetIndex();

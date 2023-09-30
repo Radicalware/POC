@@ -36,6 +36,7 @@ void APU::Core::ReadData(const xint FnSizeMultiplier)
     MnColumnCount = MoHost.MvCSVColumnValuesStr.At(0).Size();
     MnRowCount = MoHost.MvCSVColumnValuesStr.Size();
     MoHost.MvColumnValues.clear();
+
     Rescue();
 }
 
