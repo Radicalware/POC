@@ -15,14 +15,16 @@ namespace APU
                  Core(const xstring& FsFilePath);
         RIN void SetFilePath(const xstring& FsPath) { MsFilePath = FsPath; }
 
-            void ReadData(const xint FnSizeMultiplier = 1);
+            xstring ReadData(const xint FnSizeMultiplier = 1);
         VIR void ConfigureColumnValues();
         VIR void ParseResults(const bool FbForceRestart = false) = 0;
 
-            auto GetColumnCount() const { return MnColumnCount * MnSizeMultiplier; }
-            auto GetRowCount()    const { return MnRowCount * MnSizeMultiplier; }
+            auto GetColumnCount() const { return MnColumnCount * MnColMultiplier; }
+            auto GetRowCount()    const { return MnRowCount * MnRowMultiplier; }
 
-        VIR CST ColumnSummary& GetDataset(const xint FnValue) const = 0;
+        CST ColumnSummary& GetColumnSummary(const xint FnValue) CST;
+
+        istatic xint SnReloop = 1;
 
     protected:
         struct Host
@@ -31,7 +33,7 @@ namespace APU
             xvector<xvector<double>>  MvCSVColumnValues;
             xvector<xvector<double>>  MvColumnValues; // converted
 
-            xvector<ColumnSummary>    MvSummaries; // converted
+            xp<ColumnSummary[]>       MvSummaries; // converted
 
             xp<RA::StatsGPU[]>        MvStatsGPU;
             xp<RA::StatsCPU[]>        MvStatsCPU;
@@ -41,10 +43,10 @@ namespace APU
         Host MoHost;
 
         xstring MsFilePath;
-        xint    MnSizeMultiplier = 1;
+        xint    MnColMultiplier = 1;
+        xint    MnRowMultiplier = 1;
         xint    MnColumnCount = 0;
         xint    MnRowCount = 0;
-        xvector<xint> MvRange;
         bool MbRead = false;
         bool MbParsed = false;
     };

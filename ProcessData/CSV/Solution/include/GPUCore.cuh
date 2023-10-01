@@ -14,7 +14,8 @@ namespace GPU
     __global__ void ParseResultColumnIdx(
         ColumnSummary* FvSummaries, // Output
         RA::StatsGPU* FvStats, const ColumnData* FvColumnData, // column data is processed through stats
-        const xint FnColumnCount, const xint FnRowCount); // Dimensions for the data
+        const xint FnColumnCount, const xint FnRowCount, // Dimensions for the data
+        const xint FnReloop); 
 
     class Core : public APU::Core
     {
@@ -24,9 +25,7 @@ namespace GPU
         VIR void ConfigureColumnValues();
         VIR void ParseResults(const bool FbForceRestart);
 
-        VIR CST ColumnSummary& GetDataset(const xint FnValue) CST;
     private:
-        std::tuple<dim3, dim3> GetGridBlockConfig(const xint FnDbgVal = 0) const;
         struct Device
         {
             ColumnData* MvColumnData = nullptr;

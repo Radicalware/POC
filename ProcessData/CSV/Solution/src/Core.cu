@@ -1,18 +1,21 @@
 #include "Core.cuh"
 #include "Timer.h"
 #include "OS.h"
+#include "SYS.h"
+
+
 
 APU::Core::Core(const xstring& FsFilePath): MsFilePath(FsFilePath)
 {
 }
 
-void APU::Core::ReadData(const xint FnSizeMultiplier)
+xstring APU::Core::ReadData(const xint FnSizeMultiplier)
 {
     Begin();
-    MnSizeMultiplier = FnSizeMultiplier;
+    MnColMultiplier = FnSizeMultiplier;
 
     if (MbRead)
-        return;
+        return "";
     MbRead = true;
     MbParsed = false;
 
@@ -20,7 +23,7 @@ void APU::Core::ReadData(const xint FnSizeMultiplier)
     MoHost.MvCSVColumnValuesStr = RA::OS::ReadFile(MsFilePath)
         .Split('\n')
 #ifdef BxDebug
-        .ForEachThreadSeq<xvector<xstring>>([](const xstring& Str) { return Str.Split(','); });
+        .ForEachThreadSeq<xvector<xstring>>(  [](const xstring& Str) { return Str.Split(','); });
 #else // BxDebug
         .ForEachThreadUnseq<xvector<xstring>>([](const xstring& Str) { return Str.Split(','); });
 #endif
@@ -34,8 +37,23 @@ void APU::Core::ReadData(const xint FnSizeMultiplier)
     }
 
     MnColumnCount = MoHost.MvCSVColumnValuesStr.At(0).Size();
-    MnRowCount = MoHost.MvCSVColumnValuesStr.Size();
+    MnRowCount    = MoHost.MvCSVColumnValuesStr.Size();
     MoHost.MvColumnValues.clear();
+
+    if (CliArgs.Has('r') && !CliArgs.Key('r').First())
+        MnRowMultiplier = MnColMultiplier;
+    else if (CliArgs.Has('r'))
+        MnRowMultiplier = CliArgs.Key('r').First().To64();
+    else
+        MnRowMultiplier = (xint)((double)MnColMultiplier * ((double)MnColumnCount / (double)MnRowCount));
+    if (MnRowMultiplier == 0)
+        MnRowMultiplier = 1;
+
+    const auto LnTotalCells = GetColumnCount() * GetRowCount();
+    return RA::BindStr("CSV Dimensions: (",
+           RA::FormatNum(GetColumnCount()), " : ",
+           RA::FormatNum(GetRowCount()), ')',
+           " = ", RA::FormatNum(LnTotalCells));
 
     Rescue();
 }
@@ -48,8 +66,6 @@ void APU::Core::ConfigureColumnValues()
     if (MbParsed)
         return;
     MbParsed = true;
-    for (xint i = 0; i < GetColumnCount(); i++)
-        MvRange << i;
 
     const auto LnSize = MoHost.MvColumnValues.Size();
 
@@ -63,12 +79,12 @@ void APU::Core::ConfigureColumnValues()
     }
 
     MoHost.MvColumnValues.Resize(GetColumnCount());
-    for (auto LnColumnLoop = 0; LnColumnLoop < MnSizeMultiplier; LnColumnLoop++)
+    for (auto LnColumnLoop = 0; LnColumnLoop < MnColMultiplier; LnColumnLoop++)
     {
         for (xint Col = 0; Col < MnColumnCount; Col++)
         {
             MoHost.MvColumnValues[CurrentCol].Resize(GetRowCount());
-            for (auto LnRowLoop = 0; LnRowLoop < MnSizeMultiplier; LnRowLoop++)
+            for (auto LnRowLoop = 0; LnRowLoop < MnRowMultiplier; LnRowLoop++)
             {
                 for (xint Row = 0; Row < MnRowCount; Row++) // start at idx 1 because idx 0 is the row descriptors
                     MoHost.MvColumnValues[CurrentCol][CurrentRow]
@@ -81,3 +97,10 @@ void APU::Core::ConfigureColumnValues()
 }
 #undef CurrentCol
 #undef CurrentRow
+
+CST ColumnSummary& APU::Core::GetColumnSummary(const xint FnValue) CST
+{
+    Begin();
+    return MoHost.MvSummaries[FnValue];
+    Rescue();
+}

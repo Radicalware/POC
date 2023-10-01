@@ -3,6 +3,7 @@
 #include "OS.h"
 #include "Stats.cuh"
 #include "Nexus.h"
+#include "SYS.h"
 
 CPU::Core::Core(const xstring& FsFilePath, const bool FbMultiCPU) : 
     APU::Core(FsFilePath), MbMultiCPU(FbMultiCPU)
@@ -35,7 +36,8 @@ void CPU::Core::ParseIndex(const xint FnCol)
         LoData.Sum += LnValue;
 
         LoData.Mean = ((LoData.Mean * LoData.Count) + LnValue) / (LoData.Count + 1);
-        LoData.SumDeviation += std::pow((LnValue - LoData.Mean), 2);
+        const auto LnValMinusMean = LnValue - LoData.Mean;
+        LoData.SumDeviation += (LnValMinusMean * LnValMinusMean);
         LoData.SD = std::sqrt(LoData.SumDeviation / static_cast<double>(LoData.Count));
     }
 
@@ -44,7 +46,10 @@ void CPU::Core::ParseIndex(const xint FnCol)
 
     LoData.Mean = LoData.Sum / static_cast<double>(LoData.Count);
     for (const auto& Val : LvValues)
-        LoData.Variance += std::pow((Val - LoData.Mean), 2);
+    {
+        const auto LnValMinusMean = Val - LoData.Mean;
+        LoData.Variance += (LnValMinusMean * LnValMinusMean);
+    }
     LoData.Variance /= static_cast<double>(LoData.Count);
 
     Rescue();
@@ -53,8 +58,20 @@ void CPU::Core::ParseIndex(const xint FnCol)
 void CPU::Core::ParseIndex(const xint FnCol, RA::StatsCPU& FoStat)
 {
     Begin();
-    for (xint Row = 0; Row < GetRowCount(); Row++)
-        FoStat << MoHost.MvColumnValues[FnCol][Row];
+
+    for (xint l = 0; l < SnReloop; l++)
+    {
+        for (xint Row = 0; Row < GetRowCount(); Row++)
+            FoStat << MoHost.MvColumnValues[FnCol][Row];
+    }
+    Rescue();
+}
+
+void CPU::Core::ParseIndicies(const xint FnCol)
+{
+    Begin();
+    ParseIndex(FnCol, MoHost.MvStatsCPU[FnCol]);
+    MoHost.MvSummaries[FnCol].SetCPU(GetRowCount(), MoHost.MvStatsCPU[FnCol]);
     Rescue();
 }
 
@@ -66,54 +83,43 @@ void CPU::Core::ParseResults(const bool FbForceRestart)
         if (MbParsed && MoHost.MvSummaries.Size())
             return;
 
-    MoHost.MvSummaries.clear();
-    MoHost.MvSummaries.resize(GetColumnCount());
 
     const auto LmStatOps = xmap<RA::EStatOpt, xint>{ 
         {RA::EStatOpt::AVG, 0},{RA::EStatOpt::STOCH, 0},{RA::EStatOpt::SD, 0} 
     };
     MoHost.MvStatsCPU = MKP<RA::StatsCPU[]>(GetColumnCount()/*, 0, LmStatOps*/);
 
-#ifdef BxDebug
-    MbMultiCPU = false;
-#endif // BxDebug
+    MoHost.MvSummaries = MKP<ColumnSummary[]>(GetColumnCount());
 
+//#ifdef BxDebug
+//    MbMultiCPU = false;
+//#endif // BxDebug
+
+    for (auto& LoStat : MoHost.MvStatsCPU)
+        LoStat.Construct(0, LmStatOps);
 
     if (MbMultiCPU)
     {
-        for (auto& LoStat : MoHost.MvStatsCPU)
-            LoStat.Construct(0, LmStatOps);
-
-        MvRange.LoopAllUnseq(
-            [this](const xint FnCol)
-            { The.ParseIndex(FnCol, MoHost.MvStatsCPU[FnCol]); return false; }
-        );
-
-        MvRange.LoopAllUnseq([this](const xint FnCol)
-            { The.MoHost.MvSummaries[FnCol].SetCPU(GetRowCount(), MoHost.MvStatsCPU[FnCol]); }
-        );
+        if (CliArgs.Has('j'))
+        {
+            auto LvThreads = xvector<xp<std::jthread>>();
+            for (xint Col = 0; Col < GetColumnCount(); Col++)
+                LvThreads << MKP<std::jthread>(std::bind(&CPU::Core::ParseIndicies, std::ref(The), Col));
+            LvThreads.EraseAll();
+        }
+        else
+        {
+            for (xint Col = 0; Col < GetColumnCount(); Col++)
+                Nexus<>::AddTask(The, &CPU::Core::ParseIndicies, Col);
+            Nexus<>::WaitAll();
+        }
     }
     else
     {
         MoHost.MvStatsCPU.Proc([this, &LmStatOps](auto& LoStat) { LoStat.Construct(0, LmStatOps); });
-
-        MvRange.Proc(
-            [this](const xint FnCol)
-            { The.ParseIndex(FnCol, MoHost.MvStatsCPU[FnCol]); return false; }
-        );
-
-        MvRange.Proc([this](const xint FnCol)
-            { The.MoHost.MvSummaries[FnCol].SetCPU(GetRowCount(), MoHost.MvStatsCPU[FnCol]); return false; }
-        );
+        for (xint Col = 0; Col < GetColumnCount(); Col++)
+            ParseIndicies(Col);
     }
 
-    Rescue();
-}
-
-
-CST ColumnSummary& CPU::Core::GetDataset(const xint FnValue) CST
-{
-    Begin();
-    return MoHost.MvSummaries[FnValue];
     Rescue();
 }

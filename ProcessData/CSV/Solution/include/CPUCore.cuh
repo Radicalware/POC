@@ -16,9 +16,10 @@ namespace CPU
     private:
         void ParseIndex(const xint FnCol);
         void ParseIndex(const xint FnCol, RA::StatsCPU& FoStat);
+
+        void ParseIndicies(const xint FnCol);
     public:
         VIR void ParseResults(const bool FbForceRestart);
-        VIR CST ColumnSummary& GetDataset(const xint FnValue) const;
 
     private:
         bool MbMultiCPU = true;
