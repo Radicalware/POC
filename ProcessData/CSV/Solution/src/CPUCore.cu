@@ -55,48 +55,37 @@ void CPU::Core::ParseIndex(const xint FnCol)
     Rescue();
 }
 
-void CPU::Core::ParseIndex(const xint FnCol, RA::StatsCPU& FoStat)
+void CPU::Core::ParseForColumnSummary(const xint FnCol)
 {
     Begin();
+    auto& LoStats = MoHost.MvStatsCPU[FnCol];
 
     for (xint l = 0; l < SnReloop; l++)
     {
         for (xint Row = 0; Row < GetRowCount(); Row++)
-            FoStat << MoHost.MvColumnValues[FnCol][Row];
+            LoStats << MoHost.MvColumnValues[FnCol][Row];
     }
+
+    MoHost.MvSummaries[FnCol].SetCPU(GetRowCount(), LoStats);
     Rescue();
 }
 
-void CPU::Core::ParseIndicies(const xint FnCol)
+void CPU::Core::ConfigureColumnValues()
 {
-    Begin();
-    ParseIndex(FnCol, MoHost.MvStatsCPU[FnCol]);
-    MoHost.MvSummaries[FnCol].SetCPU(GetRowCount(), MoHost.MvStatsCPU[FnCol]);
-    Rescue();
+    APU::Core::ConfigureColumnValues();
+    MoHost.MvStatsCPU  = MKP<RA::StatsCPU[]>(GetColumnCount());
+    MoHost.MvSummaries = MKP<ColumnSummary[]>(GetColumnCount());
+    for (auto& LoStat : MoHost.MvStatsCPU)
+        LoStat.Construct(0, SmStatArgs);
 }
 
 void CPU::Core::ParseResults(const bool FbForceRestart)
 {
     Begin();
 
-    if (!FbForceRestart)
-        if (MbParsed && MoHost.MvSummaries.Size())
-            return;
-
-
-    const auto LmStatOps = xmap<RA::EStatOpt, xint>{ 
-        {RA::EStatOpt::AVG, 0},{RA::EStatOpt::STOCH, 0},{RA::EStatOpt::SD, 0} 
-    };
-    MoHost.MvStatsCPU = MKP<RA::StatsCPU[]>(GetColumnCount()/*, 0, LmStatOps*/);
-
-    MoHost.MvSummaries = MKP<ColumnSummary[]>(GetColumnCount());
-
 //#ifdef BxDebug
 //    MbMultiCPU = false;
 //#endif // BxDebug
-
-    for (auto& LoStat : MoHost.MvStatsCPU)
-        LoStat.Construct(0, LmStatOps);
 
     if (MbMultiCPU)
     {
@@ -104,21 +93,20 @@ void CPU::Core::ParseResults(const bool FbForceRestart)
         {
             auto LvThreads = xvector<xp<std::jthread>>();
             for (xint Col = 0; Col < GetColumnCount(); Col++)
-                LvThreads << MKP<std::jthread>(std::bind(&CPU::Core::ParseIndicies, std::ref(The), Col));
+                LvThreads << MKP<std::jthread>(std::bind(&CPU::Core::ParseForColumnSummary, std::ref(The), Col));
             LvThreads.EraseAll();
         }
         else
         {
             for (xint Col = 0; Col < GetColumnCount(); Col++)
-                Nexus<>::AddTask(The, &CPU::Core::ParseIndicies, Col);
+                Nexus<>::AddTask(The, &CPU::Core::ParseForColumnSummary, Col);
             Nexus<>::WaitAll();
         }
     }
     else
     {
-        MoHost.MvStatsCPU.Proc([this, &LmStatOps](auto& LoStat) { LoStat.Construct(0, LmStatOps); });
         for (xint Col = 0; Col < GetColumnCount(); Col++)
-            ParseIndicies(Col);
+            ParseForColumnSummary(Col);
     }
 
     Rescue();

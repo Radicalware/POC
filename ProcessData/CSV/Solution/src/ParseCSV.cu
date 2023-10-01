@@ -91,8 +91,11 @@ int main(int argc, char** argv)
         LbParseCPU = true;
         LbParseGPU = true;
     }
+    if (!LbParseCPU && !LbParseGPU)
+        ExitEarly("No Selection");
 
     const bool LbTestBoth = (LbParseCPU && LbParseGPU);
+
 
 #ifdef BxDebug
     //LbParseCPU = true;  // true, false
@@ -114,12 +117,11 @@ int main(int argc, char** argv)
             Nexus<void>::AddTask(&Test::PrepGPU);
         #endif
 
-    if (!LbParseCPU && !LbParseGPU)
-        ExitEarly("No Selection");
-
 
     if (CliArgs.Has('l'))
         APU::Core::SnReloop = CliArgs.Key('l').First().To64();
+    if (!APU::Core::SnReloop)
+        APU::Core::SnReloop = 1;
 
     Nexus<void>::WaitAll();
     cout << "\n\n";

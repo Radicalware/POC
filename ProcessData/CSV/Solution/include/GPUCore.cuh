@@ -11,7 +11,7 @@
 
 namespace GPU
 {
-    __global__ void ParseResultColumnIdx(
+    __global__ void ParseForColumnSummary(
         ColumnSummary* FvSummaries, // Output
         RA::StatsGPU* FvStats, const ColumnData* FvColumnData, // column data is processed through stats
         const xint FnColumnCount, const xint FnRowCount, // Dimensions for the data

@@ -4,7 +4,7 @@
 #include "CudaBridge.cuh"
 
 
-__global__ void GPU::ParseResultColumnIdx(
+__global__ void GPU::ParseForColumnSummary(
     ColumnSummary* FvSummaries, 
     RA::StatsGPU* FvStats, const ColumnData* FvColumnData, 
     const xint FnColumnCount, const xint FnRowCount,
@@ -12,14 +12,10 @@ __global__ void GPU::ParseResultColumnIdx(
 {
     auto Col = RA::Device::GetThreadID();
     if (Col >= FnColumnCount)
-    {
-        //RA::Device::Print(blockIdx, threadIdx);
         return;
-    }
     
     const auto& LvColumnValues = FvColumnData[Col];
     auto& LoStats = FvStats[Col];
-    auto& LoSummary = FvSummaries[Col];
 
     for (xint l = 0; l < FnReloop; l++)
     {
@@ -27,7 +23,7 @@ __global__ void GPU::ParseResultColumnIdx(
             LoStats << LvColumnValues.MvDeviceRows[i];
     }
     
-    LoSummary.SetGPU(FnRowCount, LoStats);
+    FvSummaries[Col].SetGPU(FnRowCount, LoStats);
 }
 
 GPU::Core::Core(const xstring& FsFilePath): APU::Core(FsFilePath)
@@ -53,23 +49,17 @@ void GPU::Core::ConfigureColumnValues()
         MoHost.MvColumnData, RA::Allocate(GetColumnCount(), 
             sizeof(ColumnData)));
 
+
+    MoHost.MvStatsGPU = MKP<RA::StatsGPU[]>(GetColumnCount());
+    for (auto& LoStat : MoHost.MvStatsGPU)
+        LoStat.Construct(0, SmStatArgs);
+
     Rescue();
 }
 
 void GPU::Core::ParseResults(const bool FbForceRestart)
 {
     Begin();
-    if(!FbForceRestart)
-        if (MbParsed && MoDevice.MoResultStats.Size())
-            return;
-
-    const auto LmStatOps = xmap<RA::EStatOpt, xint>{
-        {RA::EStatOpt::AVG, 0},{RA::EStatOpt::STOCH, 0},{RA::EStatOpt::SD, 0}
-    };
-
-    MoHost.MvStatsGPU = MKP<RA::StatsGPU[]>(GetColumnCount());
-    for (auto& LoStat : MoHost.MvStatsGPU)
-        LoStat.Construct(0, LmStatOps);
 
     MoDevice.MoResultStats = RA::CudaBridge<RA::StatsGPU>(MoHost.MvStatsGPU, MoHost.MvStatsGPU.GetLength());
     MoDevice.MoResultStats.AllocateDevice();
@@ -79,12 +69,12 @@ void GPU::Core::ParseResults(const bool FbForceRestart)
     cout << "Column Count: " << RA::FormatNum(GetColumnCount()) << endl;
     const auto [LvGrid, LvBlock] = RA::Host::GetDimensions3D(GetColumnCount());
     
-    SetCudaMaxMem(GPU::ParseResultColumnIdx);
+    SetCudaMaxMem(GPU::ParseForColumnSummary);
     RA::Host::PrintGridBlockDims(LvGrid, LvBlock);
     MoDevice.MoColumnSummaries = RA::CudaBridge<ColumnSummary>::ARRAY::RunGPU(
         RA::Allocate(GetColumnCount(), sizeof(ColumnSummary)),
         LvGrid, LvBlock,
-        &GPU::ParseResultColumnIdx,
+        &GPU::ParseForColumnSummary,
         MoDevice.MoResultStats.GetDevice(),
         MoDevice.MvColumnData, GetColumnCount(), GetRowCount(),
         SnReloop

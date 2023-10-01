@@ -15,10 +15,9 @@ namespace CPU
 
     private:
         void ParseIndex(const xint FnCol);
-        void ParseIndex(const xint FnCol, RA::StatsCPU& FoStat);
-
-        void ParseIndicies(const xint FnCol);
+        void ParseForColumnSummary(const xint FnCol);
     public:
+        VIR void ConfigureColumnValues();
         VIR void ParseResults(const bool FbForceRestart);
 
     private:

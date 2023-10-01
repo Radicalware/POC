@@ -49,5 +49,7 @@ namespace APU
         xint    MnRowCount = 0;
         bool MbRead = false;
         bool MbParsed = false;
+
+        const istatic xmap<RA::EStatOpt, xint> SmStatArgs{{RA::EStatOpt::AVG, 0}, { RA::EStatOpt::STOCH, 0 }, { RA::EStatOpt::SD, 0 }};
     };
 }
