@@ -50,6 +50,6 @@ namespace APU
         bool MbRead = false;
         bool MbParsed = false;
 
-        const istatic xmap<RA::EStatOpt, xint> SmStatArgs{{RA::EStatOpt::AVG, 0}, { RA::EStatOpt::STOCH, 0 }, { RA::EStatOpt::SD, 0 }};
+        const istatic xvector<RA::EStatOpt> SvStatArgs {RA::EStatOpt::AVG, RA::EStatOpt::STOCH, RA::EStatOpt::SD};
     };
 }

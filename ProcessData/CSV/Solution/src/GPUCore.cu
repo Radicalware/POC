@@ -52,7 +52,7 @@ void GPU::Core::ConfigureColumnValues()
 
     MoHost.MvStatsGPU = MKP<RA::StatsGPU[]>(GetColumnCount());
     for (auto& LoStat : MoHost.MvStatsGPU)
-        LoStat.Construct(0, SmStatArgs);
+        LoStat.Construct(0, SvStatArgs);
 
     Rescue();
 }

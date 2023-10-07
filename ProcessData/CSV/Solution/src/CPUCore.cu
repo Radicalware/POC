@@ -76,7 +76,7 @@ void CPU::Core::ConfigureColumnValues()
     MoHost.MvStatsCPU  = MKP<RA::StatsCPU[]>(GetColumnCount());
     MoHost.MvSummaries = MKP<ColumnSummary[]>(GetColumnCount());
     for (auto& LoStat : MoHost.MvStatsCPU)
-        LoStat.Construct(0, SmStatArgs);
+        LoStat.Construct(0, SvStatArgs);
 }
 
 void CPU::Core::ParseResults(const bool FbForceRestart)
