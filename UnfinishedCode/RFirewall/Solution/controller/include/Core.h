@@ -1,33 +1,46 @@
 #pragma once
-#pragma warning( disable : 26812 ) // to allow our rxm enum even though it isn't a class enum
+#pragma warning(disable : 4101)  // for allowing the STL (non-class enum)
+#pragma warning(disable : 26812) // for allowing the STL (non-class enum)
 
-#include "Macros.h"
-#include "File.h"
-#include "Options.h"
+#include <iostream>
 
-class Core
-{
-    const Options& MoOption; // based on user input
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QObject>
+#include <QQmlApplicationEngine>
 
-    xvector<xp<File>> MvoFiles; // list of file data (split lines)
-    xvector<xstring> MvsFileList; // list of file names in the m_directory
+#include "Scanner/Dataset.h"
+#include "Timer.h"
 
-    xp<File> MoFilePtr = nullptr;
-    istatic RE2 SoBackslashRex = R"(\\)";
-    const xstring MsPWD = RA::OS::PWD();
+using std::cout;
+using std::endl;
 
-    void Filter();
-
+class Core : public QObject {
+  Q_OBJECT
 public:
-    Core(const Options& FoOptions);
+  explicit Core(QObject *parent = nullptr);
+  virtual ~Core();
+  bool Initialize();
 
-    void PipedScan();
-    void ScanFile(xstring& FsPath);
+  // -------------------------------------------------------------------------
+  // QProperties Start
+public:
+  void SetStopClock(xint unused = 0);
 
-    void MultiCoreScan();
-    void SingleCoreScan();
+  // QProperties End
+  // -------------------------------------------------------------------------
+  // C++ Signals Start
 
-    void Print();
-    void PrintDivider() const;
+signals:
+  void sigStartScan(); // Used to reset timer
+signals:
+  void sigEndScan(); // Used to get time after search execution
+
+  // C++ Signals End
+  // -------------------------------------------------------------------------
+private:
+  QQmlApplicationEngine MoEngine;
+  Scanner::Dataset *MoScannerPtr = nullptr;
+  RA::Timer MoTimer;
 };
-

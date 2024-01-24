@@ -3,6 +3,7 @@
 #define Rules_H
 
 #include <QAbstractListModel>
+#include <QVariant>
 
 #include "Scanner/Rule.h"
 #include "xvector.h"

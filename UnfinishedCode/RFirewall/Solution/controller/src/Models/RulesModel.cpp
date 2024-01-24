@@ -3,6 +3,9 @@
 
 #include "Scanner/Rule.h"
 #include "Scanner/Dataset.h"
+#include <QVariant>
+
+#define CharToVariant(__Val__) QVariant::fromValue(QString::fromUtf8(__Val__))
 
 Scanner::RulesModel::RulesModel(QObject* parent ) : QAbstractListModel(parent)
 {
@@ -29,15 +32,15 @@ QVariant Scanner::RulesModel::GetData(const QModelIndex& index, int role) const
     // std::cout << "GetData() << " << mRules.At(index.row()).ExeName.toStdString() << std::endl;
     if (index.row() < rowCount())
         switch (role) {
-            case ERoleExeName:        return mRules.At(index.row()).ExeName.c_str();
-            case ERoleFullPath:       return mRules.At(index.row()).FullPath.c_str();
-            case ERoleRuleName:       return mRules.At(index.row()).RuleName.c_str();
-            case ERoleDescription:    return mRules.At(index.row()).Description.c_str();
-            case ERoleServiceName:    return mRules.At(index.row()).ServiceName.c_str();
-            case ERoleLocalAddress:   return mRules.At(index.row()).Local.Address.c_str();
-            case ERoleLocalPort:      return mRules.At(index.row()).Local.Port.c_str();
-            case ERoleRemoteAddress:  return mRules.At(index.row()).Remote.Address.c_str();
-            case ERoleRemotePort:     return mRules.At(index.row()).Remote.Port.c_str();
+            case ERoleExeName:        return QVariant::fromValue(QString::fromUtf8(mRules.At(index.row()).ExeName.c_str()));
+            case ERoleFullPath:       return CharToVariant(mRules.At(index.row()).FullPath.c_str());
+            case ERoleRuleName:       return CharToVariant(mRules.At(index.row()).RuleName.c_str());
+            case ERoleDescription:    return CharToVariant(mRules.At(index.row()).Description.c_str());
+            case ERoleServiceName:    return CharToVariant(mRules.At(index.row()).ServiceName.c_str());
+            case ERoleLocalAddress:   return CharToVariant(mRules.At(index.row()).Local.Address.c_str());
+            case ERoleLocalPort:      return CharToVariant(mRules.At(index.row()).Local.Port.c_str());
+            case ERoleRemoteAddress:  return CharToVariant(mRules.At(index.row()).Remote.Address.c_str());
+            case ERoleRemotePort:     return CharToVariant(mRules.At(index.row()).Remote.Port.c_str());
         default: return QVariant();
     }
     return QVariant();
@@ -87,10 +90,10 @@ QVariantMap Scanner::RulesModel::Get(int row) const
     Begin();
     const Scanner::Rule rule = mRules.At(row);
     return { 
-        {"exeName", rule.ExeName.c_str()},
-        {"fullPath", rule.FullPath.c_str()},
-        {"description", rule.Description.c_str()},
-        {"serviceName", rule.ServiceName.c_str()}
+        {"exeName",     CharToVariant(rule.ExeName.c_str())},
+        {"fullPath",    CharToVariant(rule.FullPath.c_str())},
+        {"description", CharToVariant(rule.Description.c_str())},
+        {"serviceName", CharToVariant(rule.ServiceName.c_str())}
     };
     Rescue();
 }

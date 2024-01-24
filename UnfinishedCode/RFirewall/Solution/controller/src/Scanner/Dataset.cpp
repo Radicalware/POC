@@ -140,7 +140,7 @@ bool Scanner::Dataset::ScanRules()
             if (SUCCEEDED(hr)) hr = (V_DISPATCH(&var))->QueryInterface(__uuidof(INetFwRule), reinterpret_cast<void**>(&pFwRule));
             if (SUCCEEDED(hr) && pFwRule) {
                 if(pFwRule)
-                    NexusRules.AddJob(&Scanner::Dataset::ParseOutRule, pFwRule); // Output the properties of this rule
+                    NexusRules.AddTask(&Scanner::Dataset::ParseOutRule, pFwRule); // Output the properties of this rule
             }
         }
 
@@ -231,7 +231,7 @@ xp<Scanner::Rule> Scanner::Dataset::ParseOutRule(INetFwRule* FwRule)
 
     if (SUCCEEDED(FwRule->get_ApplicationName(&bstrVal))) {
         LoRule.FullPath = bstrVal;
-        LoRule.ExeName = LoRule.FullPath.Sub(Scanner::Rule::ExePathPattern, xstring::static_class);
+        LoRule.ExeName = LoRule.FullPath.Sub(Scanner::Rule::ExePathPattern, xstring::StaticClass);
     }
 
     if (SUCCEEDED(FwRule->get_ServiceName(&bstrVal)))

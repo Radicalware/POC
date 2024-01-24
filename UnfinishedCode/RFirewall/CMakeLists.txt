@@ -20,6 +20,8 @@ list(APPEND PrivateLibs "Macros")
 list(APPEND PrivateLibs "xmap")
 
 set(PublicLibs "")
+list(APPEND PublicLibs "OS")
+list(APPEND PublicLibs "SYS")
 list(APPEND PublicLibs "Timer")
 
 BuildRadicalQt6Solution(PrivateLibs PublicLibs)
